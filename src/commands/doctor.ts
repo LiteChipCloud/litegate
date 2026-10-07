@@ -1,4 +1,6 @@
 import { ADAPTERS } from "../adapters/registry.js";
+import fs from "node:fs";
+import path from "node:path";
 import { fetchModelPricing } from "../core/litegate-api.js";
 
 export async function runDoctor(): Promise<void> {
@@ -6,6 +8,14 @@ export async function runDoctor(): Promise<void> {
   for (const a of ADAPTERS) {
     const info = a.detect();
     console.log(`${info.name.padEnd(16)} ${info.present ? "已安装" : "未安装"}  ${info.configPath}`);
+    if (info.id === "zcode") {
+      try {
+        const cfg = JSON.parse(fs.readFileSync(path.join(process.env.HOME ?? "", ".zcode", "v2", "provider_config.json"), "utf8"));
+        const rules = cfg?.config?.providerConfigRules?.providerRules ?? [];
+        const lg = rules.find((r: any) => r.providerName === "LiteGate");
+        if (lg) console.log(`${" ".repeat(16)} └ LiteGate：${(lg.config.personalModelIds ?? []).length} 个模型`);
+      } catch {}
+    }
   }
   try {
     await fetchModelPricing();

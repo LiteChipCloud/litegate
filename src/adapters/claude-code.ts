@@ -28,6 +28,11 @@ export const claudeCodeAdapter: ToolAdapter = {
     }
     const env = (obj.env as Record<string, string> | undefined) ?? {};
     const changes: string[] = [];
+    if (env.ANTHROPIC_BASE_URL || env.ANTHROPIC_AUTH_TOKEN) {
+      // increment 模式：已有 ANTHROPIC_* 配置（可能指向其他服务），不覆盖，仅提示
+      if (o.mode === "increment")
+        return { ok: true, supported: true, wrote: false, changes: [], skipped: "已存在 ANTHROPIC_BASE_URL/AUTH_TOKEN 配置（increment 模式不覆盖）；--mode replace 可覆盖" };
+    }
     if (o.mode === "replace" || !env.ANTHROPIC_BASE_URL) {
       env.ANTHROPIC_BASE_URL = o.baseUrlAnthropic;
       changes.push("env.ANTHROPIC_BASE_URL");
