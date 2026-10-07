@@ -1,0 +1,38 @@
+{
+  "name": "@litechipcloud/litegate",
+  "version": "0.1.0",
+  "description": "LiteGate CLI —— 一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate（14 款模型 · 双协议 · 长期免费模型）",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "bin": { "litegate": "dist/index.js", "litegate-cli": "dist/index.js" },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md", "poster.png"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "@iarna/toml": "^2.2.5",
+    "commander": "^14.0.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "repository": { "type": "git", "url": "git+https://github.com/LiteChipCloud/litegate.git" },
+  "homepage": "https://www.litechipcloud.cn",
+  "keywords": [
+    "litegate", "llm-gateway", "api-gateway", "openai-compatible", "claude-code",
+    "codex", "zcode", "trae", "workbuddy", "minimax-code", "deepseek", "minimax",
+    "claude", "glm", "qwen", "chinese-llm", "free-llm", "ai-gateway"
+  ]
+}
