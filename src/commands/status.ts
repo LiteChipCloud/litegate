@@ -14,7 +14,7 @@ export function runStatus(): void {
         apiKey: "", baseUrlAnthropic: "https://www.litechipcloud.cn",
         baseUrlOpenAI: "https://www.litechipcloud.cn/v1",
         models: [], chatModels: [], defaultModelKey: "", mode: "increment", dryRun: true,
-      });
+      }, info);
       litegate = errs.length === 0 ? "已接入 ✓" : "未接入";
     } catch { litegate = "未知"; }
     console.log(`${info.name.padEnd(16)} ${info.configExists ? "已配置" : "未初始化"}  LiteGate: ${litegate}`);

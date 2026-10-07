@@ -1,6 +1,6 @@
 {
   "name": "@litechipcloud/litegate",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "LiteGate Cli —— 一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate（14 款模型 · 双协议 · 长期免费模型）",
   "license": "MIT",
   "type": "module",
