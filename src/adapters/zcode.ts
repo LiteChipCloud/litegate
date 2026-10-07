@@ -68,18 +68,25 @@ export const zcodeAdapter: ToolAdapter = {
     existing.config.modelOrder = chatIds;
 
     // 模型上下文规则（与 providerId 关联）
-    const mRules = root.config.modelConfigRules.providerModelRules;
+    const mRules: any[] = root.config.modelConfigRules.providerModelRules;
     for (const m of chat) {
       const found = mRules.find((r: any) => r.modelId === m.modelKey && r.providerId === existing!.providerId);
       if (found) found.config = { properties: { contextWindow: m.contextWindow } };
       else mRules.push({ modelId: m.modelKey, providerId: existing!.providerId, config: { properties: { contextWindow: m.contextWindow } } });
     }
 
-    const out = JSON.stringify(root, null, 2) + "\n";
-    assertValidJSON(out, "ZCode provider_config");
     const changes = isNew
       ? ["新增 LiteGate providerRule", `personalModelIds×${chatIds.length}`, "modelConfigRules 同步"]
       : ["刷新 LiteGate personalModelIds/modelOrder", "modelConfigRules 同步"];
+    // 数据卫生：清理 LiteGate provider 名下已不在模型列表的孤儿 ctx 规则
+    const orphans = mRules.filter((r: any) => r.providerId === existing.providerId && !chatIds.includes(r.modelId));
+    if (orphans.length) {
+      root.config.modelConfigRules.providerModelRules = mRules.filter((r: any) => r.providerId !== existing.providerId || chatIds.includes(r.modelId));
+      changes.push(`清理孤儿 ctx 规则×${orphans.length}`);
+    }
+    const out = JSON.stringify(root, null, 2) + "\n";
+    assertValidJSON(out, "ZCode provider_config");
+
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes };
     if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
     else backupFile(ID, file, isNew ? "add-provider" : "update-provider-models");
