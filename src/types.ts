@@ -59,7 +59,7 @@ export interface ToolAdapter {
   name: string;
   detect(): ToolInstallInfo;
   configure(o: ConfigureOptions, info: ToolInstallInfo): Promise<AdapterResult> | AdapterResult;
-  verify(o: ConfigureOptions, info: ToolInstallInfo): Promise<string[]> | string[];
+  verify(o: ConfigureOptions, info: ToolInstallInfo): string[];
   restore(backup: string): void;
 }
 
