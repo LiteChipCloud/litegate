@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import { ADAPTERS } from "../adapters/registry.js";
-import { fetchModelPricing, chatModels, isFree } from "../core/litegate-api.js";
+import { fetchModelPricing, chatModels, isFree, pickDefaultModel } from "../core/litegate-api.js";
 import type { LiteGateModel } from "../types.js";
 
 const BASE_ANTHROPIC = "https://www.litechipcloud.cn";
@@ -93,7 +93,7 @@ export async function runInit(opts: InitOptions): Promise<void> {
         baseUrlOpenAI: BASE_OPENAI,
         models,
         chatModels: chat,
-        defaultModelKey: chat[0]?.modelKey ?? "minimax-m3.1-flash",
+        defaultModelKey: pickDefaultModel(chat),
         mode,
         dryRun: !!opts.dryRun,
       }, r.info);

@@ -1,17 +1,20 @@
 #!/usr/bin/env node
+import { createRequire } from "node:module";
 import { Command } from "commander";
 import { runInit } from "./commands/init.js";
 import { runStatus } from "./commands/status.js";
-import { runModels } from "./commands/models.js";
 import { runRollback } from "./commands/rollback.js";
 import { runDoctor } from "./commands/doctor.js";
+
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json") as { version: string };
 
 const program = new Command();
 
 program
   .name("litegate")
   .description("LiteGate Cli —— 一条命令，把 AI 编程工具全部接上 LiteGate（14 款模型 · 双协议 · 免费模型）")
-  .version("0.1.0");
+  .version(version);
 
 program
   .command("init")
@@ -30,8 +33,9 @@ program
 
 program
   .command("models")
-  .description("列出 LiteGate 全部可用模型与价格")
-  .action(runModels);
+  .description("列出 LiteGate 全部可用模型与价格（默认按实时价格排序）")
+  .option("--sort <by>", "price（默认，实时价格升序、免费在前）| name | type", "price")
+  .action((opts) => { import("./commands/models.js").then((m) => m.runModels(opts.sort)); });
 
 program
   .command("switch [model]")

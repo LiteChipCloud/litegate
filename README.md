@@ -14,6 +14,8 @@
 
 [English](#english) | 中文
 
+<img src="assets/demo.gif" alt="LiteGate Cli 演示：status / models 实时价格 / init 一键接入" width="880">
+
 </div>
 
 ---

@@ -16,6 +16,28 @@ export function chatModels(models: LiteGateModel[]): LiteGateModel[] {
   return models.filter((m) => m.type === "chat");
 }
 
+/** 默认模型偏好序（质量优先），取第一个在售的；禁止盲取接口第一条 */
+const DEFAULT_MODEL_PREFERENCE = ["claude-sonnet-5-5", "glm-5.3-flash", "minimax-m3.1-flash"];
+
+export function pickDefaultModel(chat: LiteGateModel[]): string {
+  for (const key of DEFAULT_MODEL_PREFERENCE) {
+    if (chat.some((m) => m.modelKey === key)) return key;
+  }
+  return chat[0]?.modelKey ?? "minimax-m3.1-flash";
+}
+
+/** 实时价格排序：免费 → chat（单价升序）→ image / embedding */
+export function sortByPrice(models: LiteGateModel[]): LiteGateModel[] {
+  const typeOrder = (t: string) => (t === "chat" ? 0 : 1);
+  const cost = (m: LiteGateModel): number =>
+    m.billingMode === "per_call" ? (m.pricePerCall ?? 0) : m.inputPrice + m.outputPrice;
+  return [...models].sort((a, b) => {
+    if (isFree(a) !== isFree(b)) return isFree(a) ? -1 : 1;
+    if (typeOrder(a.type) !== typeOrder(b.type)) return typeOrder(a.type) - typeOrder(b.type);
+    return cost(a) - cost(b);
+  });
+}
+
 export function isFree(m: LiteGateModel): boolean {
   if (m.billingMode === "per_call")
     return (m.pricePerCall ?? 0) === 0;
@@ -24,8 +46,13 @@ export function isFree(m: LiteGateModel): boolean {
 
 export function priceLabel(m: LiteGateModel): string {
   if (m.billingMode === "per_call")
-    return `¥${trim0(m.pricePerCall ?? 0)} / 次`;
+    return `¥${trimPerCall(m.pricePerCall ?? 0)} / 次`;
   return `¥${trim0(m.inputPrice)} / ¥${trim0(m.outputPrice)} 每百万`;
+}
+
+function trimPerCall(n: number): string {
+  // pricePerCall 单位即元/次：0.5 -> "0.5"，不做千倍换算
+  return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(4)));
 }
 
 function trim0(n: number): string {
