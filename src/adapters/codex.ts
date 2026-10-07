@@ -36,7 +36,7 @@ model = "${defaultModel}"
 name = "LiteGate"
 base_url = "${o.baseUrlOpenAI}"
 env_key = "LITEGATE_API_KEY"
-wire_api = "chat"
+wire_api = "responses"
 ${MARK_END}
 `;
     let out = block + text;
