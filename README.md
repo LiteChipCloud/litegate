@@ -101,9 +101,12 @@ wire_api = "chat"
 | `litegate rollback` | 一键回滚全部修改 |
 | `litegate doctor` | 环境诊断 |
 
-## 🤝 与 cc-switch
+## 💡 为什么用 LiteGate CLI
 
-我们尊重并推荐 [cc-switch](https://github.com/farion1231/cc-switch)（140k★ 的通用 provider 切换器）。LiteGate CLI 与它互补：**官方深度集成**——模型列表与价格实时同步自 LiteGate、Key 创建深链、接入后自动烟测，并独家支持 **ZCode**。
+- **批量接入**：一条命令，本机全部 AI 编程工具一次性接上 LiteGate——不用挨个工具手工改配置
+- **模型列表实时同步**：新模型上线自动进入你的工具，无需手动填模型 ID 和价格
+- **官方深度集成**：Key 创建深链、接入后自动烟测、ZCode 等国产工具深度支持
+- **安全**：增量模式不动既有配置、自动备份、一键回滚、全开源可审计
 
 ## 🌐 English
 
