@@ -12,6 +12,7 @@ function patchClaudeCode(model: string): string | null {
   if (!fs.existsSync(p)) return null;
   const obj = JSON.parse(fs.readFileSync(p, "utf8"));
   obj.model = model;
+  obj.env = obj.env ?? {};
   backupFile("claude-code", p, `switch-model:${model}`);
   fs.writeFileSync(p, JSON.stringify(obj, null, 2) + "\n");
   return p;

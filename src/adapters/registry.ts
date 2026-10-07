@@ -5,6 +5,7 @@ import { zcodeAdapter } from "./zcode.js";
 import { minimaxCodeAdapter } from "./minimax-code.js";
 import { traeAdapter } from "./trae.js";
 import { workbuddyAdapter } from "./workbuddy.js";
+import { continueAdapter } from "./continue.js";
 
 export const ADAPTERS: ToolAdapter[] = [
   claudeCodeAdapter,
@@ -13,6 +14,7 @@ export const ADAPTERS: ToolAdapter[] = [
   minimaxCodeAdapter,
   traeAdapter,
   workbuddyAdapter,
+  continueAdapter,
 ];
 
 export function getAdapter(id: string): ToolAdapter | undefined {
