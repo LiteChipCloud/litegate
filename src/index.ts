@@ -13,7 +13,7 @@ const program = new Command();
 
 program
   .name("litegate")
-  .description("LiteGate Cli —— 一条命令，把 AI 编程工具全部接上 LiteGate（14 款模型 · 双协议 · 免费模型）")
+  .description("LiteGate Cli —— 一条命令，把 AI 编程工具全部接上 LiteGate（13 款模型 · 双协议 · 免费模型）")
   .version(version);
 
 program

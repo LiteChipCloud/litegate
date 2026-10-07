@@ -6,7 +6,7 @@
 
 **一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate**
 
-[![models](https://img.shields.io/badge/models-14-3FC8FF)](https://www.litechipcloud.cn)
+[![models](https://img.shields.io/badge/models-13-3FC8FF)](https://www.litechipcloud.cn)
 [![free tier](https://img.shields.io/badge/free-tier-4ADE80)](https://www.litechipcloud.cn)
 [![context](https://img.shields.io/badge/context-1M-F5C86B)](https://www.litechipcloud.cn)
 [![protocol](https://img.shields.io/badge/OpenAI%20%2F%20Claude-compatible-3FC8FF)](https://www.litechipcloud.cn)
@@ -25,7 +25,7 @@
 
 ## ✨ 这是什么
 
-**LiteGate** 是一站式大模型 API 网关：一个 Key 通吃 Claude / GLM / DeepSeek / MiniMax / Qwen 等 14 款模型，OpenAI 与 Claude 双协议兼容，长期免费模型，全线 1M 上下文。
+**LiteGate** 是一站式大模型 API 网关：一个 Key 通吃 Claude / GLM / DeepSeek / MiniMax / Agnes 等 13 款模型，OpenAI 与 Claude 双协议兼容，长期免费模型，全线 1M 上下文。
 
 **LiteGate Cli** 解决最后一个痛点：每款 AI 编程工具的自定义模型配置格式都不一样——
 
@@ -126,7 +126,7 @@ wire_api = "chat"
 
 ## 🌐 English
 
-**LiteGate** is an all-in-one LLM API gateway: one API key for Claude, GLM, DeepSeek, MiniMax, Qwen and 14 models in total — OpenAI & Anthropic compatible, permanently free models, 1M context across the lineup.
+**LiteGate** is an all-in-one LLM API gateway: one API key for Claude, GLM, DeepSeek, MiniMax, Agnes and 13 models in total — OpenAI & Anthropic compatible, permanently free models, 1M context across the lineup.
 
 **LiteGate Cli** wires all your AI coding agents (Claude Code, Codex, ZCode, MiniMax Code and more) to LiteGate in one command:
 
