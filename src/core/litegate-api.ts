@@ -33,3 +33,21 @@ function trim0(n: number): string {
   const perM = n * 1000;
   return Number.isInteger(perM) ? String(perM) : String(Number(perM.toFixed(3)));
 }
+
+export async function verifyKey(
+  key: string,
+): Promise<{ ok: boolean; detail: string; modelCount?: number }> {
+  if (!key) return { ok: false, detail: "Key 为空" };
+  try {
+    const res = await fetch("https://www.litechipcloud.cn/v1/models", {
+      headers: { Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (res.status === 401) return { ok: false, detail: "Key 无效（401）" };
+    if (!res.ok) return { ok: false, detail: `HTTP ${res.status}` };
+    const d = (await res.json()) as { data?: unknown[] };
+    return { ok: true, detail: `有效，${d.data?.length ?? 0} 个模型可用`, modelCount: d.data?.length };
+  } catch (e) {
+    return { ok: false, detail: `网络错误：${(e as Error).message}` };
+  }
+}

@@ -46,7 +46,15 @@ function patchZCode(model: string): string | null {
   return p;
 }
 
-export function runSwitch(model: string): void {
+export async function runSwitch(model?: string): Promise<void> {
+  if (!model) {
+    const { fetchModelPricing } = await import("../core/litegate-api.js");
+    const { createSelect } = await import("../ui/prompts.js");
+    const models = await fetchModelPricing();
+    const chat = models.filter((m) => m.type === "chat");
+    const sel = await createSelect("选择默认模型", chat.map((m) => ({ value: m.modelKey, label: `${m.modelName}（${m.modelKey}）` })));
+    model = sel;
+  }
   // 校验模型存在于 LiteGate 目录
   fetchModelPricing().then((models) => {
     const known = models.find((m) => m.modelKey === model);

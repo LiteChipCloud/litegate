@@ -34,7 +34,7 @@ program
   .action(runModels);
 
 program
-  .command("switch <model>")
+  .command("switch [model]")
   .description("一键切换 Claude Code / Codex / ZCode 的默认模型为 LiteGate 模型")
   .action((model) => { import("./commands/switch.js").then((m) => m.runSwitch(model)); });
 

@@ -39,13 +39,24 @@ env_key = "LITEGATE_API_KEY"
 wire_api = "chat"
 ${MARK_END}
 `;
-    const out = block + text;
+    let out = block + text;
     assertValidTOML(out, "Codex config");
     const changes = ["model_provider=litegate", `model=${defaultModel}`, "[model_providers.litegate]"];
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes };
     if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
     else backupFile(ID, file, "prepend-managed-block");
     fs.writeFileSync(file, out);
+    // Key 环境变量：写入 shell rc（标记对幂等）
+    const rcFile = process.env.SHELL?.includes("fish") ? null : path.join(process.env.HOME ?? "", process.env.SHELL?.includes("bash") ? ".bashrc" : ".zshrc");
+    if (rcFile) {
+      let rc = fs.existsSync(rcFile) ? fs.readFileSync(rcFile, "utf8") : "";
+      if (!rc.includes("LITEGATE_API_KEY")) {
+        const rcBlock = `\n# >>> LiteGate begin (managed by @litechipcloud/litegate) <<<\nexport LITEGATE_API_KEY="${o.apiKey}"\n# <<< LiteGate end <<<\n`;
+        backupFile(ID, rcFile, "append-env");
+        fs.appendFileSync(rcFile, rcBlock);
+        changes.push("shell rc: LITEGATE_API_KEY");
+      }
+    }
     return { ok: true, supported: true, wrote: true, changes };
   },
   verify(): string[] {
