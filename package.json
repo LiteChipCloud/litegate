@@ -1,19 +1,28 @@
 {
   "name": "@litechipcloud/litegate",
   "version": "0.1.0",
-  "description": "LiteGate CLI —— 一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate（14 款模型 · 双协议 · 长期免费模型）",
+  "description": "LiteGate Cli —— 一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate（14 款模型 · 双协议 · 长期免费模型）",
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=18" },
-  "bin": { "litegate": "dist/index.js", "litegate-cli": "dist/index.js" },
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "litegate": "dist/index.js",
+    "litegate-cli": "dist/index.js"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "poster.png"],
+  "files": [
+    "dist",
+    "README.md",
+    "poster.png"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "prepublishOnly": "npm run build && npm run test"
   },
   "dependencies": {
@@ -28,11 +37,29 @@
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
-  "repository": { "type": "git", "url": "git+https://github.com/LiteChipCloud/litegate.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LiteChipCloud/litegate.git"
+  },
   "homepage": "https://www.litechipcloud.cn",
   "keywords": [
-    "litegate", "llm-gateway", "api-gateway", "openai-compatible", "claude-code",
-    "codex", "zcode", "trae", "workbuddy", "minimax-code", "deepseek", "minimax",
-    "claude", "glm", "qwen", "chinese-llm", "free-llm", "ai-gateway"
+    "litegate",
+    "llm-gateway",
+    "api-gateway",
+    "openai-compatible",
+    "claude-code",
+    "codex",
+    "zcode",
+    "trae",
+    "workbuddy",
+    "minimax-code",
+    "deepseek",
+    "minimax",
+    "claude",
+    "glm",
+    "qwen",
+    "chinese-llm",
+    "free-llm",
+    "ai-gateway"
   ]
 }

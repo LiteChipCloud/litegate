@@ -10,7 +10,7 @@ const program = new Command();
 
 program
   .name("litegate")
-  .description("LiteGate CLI —— 一条命令，把 AI 编程工具全部接上 LiteGate（14 款模型 · 双协议 · 免费模型）")
+  .description("LiteGate Cli —— 一条命令，把 AI 编程工具全部接上 LiteGate（14 款模型 · 双协议 · 免费模型）")
   .version("0.1.0");
 
 program
@@ -35,7 +35,7 @@ program
 
 program
   .command("rollback")
-  .description("回滚 LiteGate CLI 做过的全部修改")
+  .description("回滚 LiteGate Cli 做过的全部修改")
   .action(runRollback);
 
 program

@@ -15,7 +15,7 @@ interface InitOptions {
 }
 
 export async function runInit(opts: InitOptions): Promise<void> {
-  p.intro("LiteGate CLI · 一条命令接入全部 AI 编程工具");
+  p.intro("LiteGate Cli · 一条命令接入全部 AI 编程工具");
 
   // 1. 拉取模型目录（公开接口，无需 Key）
   const s0 = p.spinner();

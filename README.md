@@ -2,7 +2,7 @@
 
 <img src="poster.png" alt="LiteGate — 云崽 & 芯宝 陪您开跑" width="900">
 
-# LiteGate CLI
+# LiteGate Cli
 
 **一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate**
 
@@ -25,7 +25,7 @@
 
 **LiteGate** 是一站式大模型 API 网关：一个 Key 通吃 Claude / GLM / DeepSeek / MiniMax / Qwen 等 14 款模型，OpenAI 与 Claude 双协议兼容，长期免费模型，全线 1M 上下文。
 
-**LiteGate CLI** 解决最后一个痛点：每款 AI 编程工具的自定义模型配置格式都不一样——
+**LiteGate Cli** 解决最后一个痛点：每款 AI 编程工具的自定义模型配置格式都不一样——
 
 ```bash
 npx @litechipcloud/litegate init
@@ -101,7 +101,7 @@ wire_api = "chat"
 | `litegate rollback` | 一键回滚全部修改 |
 | `litegate doctor` | 环境诊断 |
 
-## 💡 为什么用 LiteGate CLI
+## 💡 为什么用 LiteGate Cli
 
 - **批量接入**：一条命令，本机全部 AI 编程工具一次性接上 LiteGate——不用挨个工具手工改配置
 - **模型列表实时同步**：新模型上线自动进入你的工具，无需手动填模型 ID 和价格
@@ -112,7 +112,7 @@ wire_api = "chat"
 
 **LiteGate** is an all-in-one LLM API gateway: one API key for Claude, GLM, DeepSeek, MiniMax, Qwen and 14 models in total — OpenAI & Anthropic compatible, permanently free models, 1M context across the lineup.
 
-**LiteGate CLI** wires all your AI coding agents (Claude Code, Codex, ZCode, MiniMax Code and more) to LiteGate in one command:
+**LiteGate Cli** wires all your AI coding agents (Claude Code, Codex, ZCode, MiniMax Code and more) to LiteGate in one command:
 
 ```bash
 npx @litechipcloud/litegate init
