@@ -101,6 +101,20 @@ wire_api = "chat"
 | `litegate rollback` | 一键回滚全部修改 |
 | `litegate doctor` | 环境诊断 |
 
+## 🔧 支持的 AI 编程工具
+
+| 工具 | 状态 |
+|---|---|
+| Claude Code | ✅ 支持 |
+| Codex CLI | ✅ 支持 |
+| ZCode | ✅ 支持（深度集成） |
+| MiniMax Code | ✅ 支持 |
+| Continue | ✅ 支持 |
+| Trae / WorkBuddy | 🔄 适配中 |
+| Cursor | ⚠️ 需 Cursor Pro 订阅（自定义 API Key 为 Pro 功能） |
+
+> CLI 只配置**你本机已安装**的工具——支持矩阵是兼容性清单，不是安装清单。
+
 ## 💡 为什么用 LiteGate Cli
 
 - **批量接入**：一条命令，本机全部 AI 编程工具一次性接上 LiteGate——不用挨个工具手工改配置

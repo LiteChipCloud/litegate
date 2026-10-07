@@ -36,7 +36,7 @@ export const continueAdapter: ToolAdapter = {
         apiBase: o.baseUrlOpenAI,
         apiKey: o.apiKey,
       };
-      const found = root.models.find((x: any) => x.model === m.modelKey && (x.apiBase ?? "").includes("litechipcloud.cn"));
+      const found = root.models.find((x: any) => x.model === m.modelKey && (x.apiBase ?? "").replace("//www.", "//").includes("litechipcloud.cn"));
       if (found) Object.assign(found, entry);
       else root.models.push(entry);
       changes.push(`+${m.modelKey}`);
@@ -55,7 +55,7 @@ export const continueAdapter: ToolAdapter = {
     const errs: string[] = [];
     try {
       const root = JSON.parse(fs.readFileSync(p, "utf8"));
-      const lg = (root.models ?? []).filter((x: any) => (x.apiBase ?? "").includes("litechipcloud.cn"));
+      const lg = (root.models ?? []).filter((x: any) => (x.apiBase ?? "").replace("//www.", "//").includes("litechipcloud.cn"));
       if (lg.length === 0) errs.push("无 LiteGate 模型条目");
     } catch (e) { errs.push(String(e)); }
     return errs;

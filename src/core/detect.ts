@@ -65,6 +65,15 @@ export const TOOLS: ToolSpec[] = [
     },
   },
   {
+    id: "cursor",
+    name: "Cursor（需 Pro 订阅）",
+    detect: () => {
+      const base = process.env.HOME?.startsWith("/Users") ? home("Library", "Application Support", "Cursor") : home(".cursor");
+      const configPath = home(".cursor", "mcp.json");
+      return { id: "cursor", name: "Cursor", present: exists(base) || exists(home(".cursor")), configPath, configExists: exists(configPath), detail: "自定义 API Key 需 Cursor Pro 订阅，免费版及 Tab 补全不支持" };
+    },
+  },
+  {
     id: "workbuddy",
     name: "WorkBuddy",
     detect: () => {

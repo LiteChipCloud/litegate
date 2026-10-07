@@ -57,7 +57,7 @@ export const claudeCodeAdapter: ToolAdapter = {
       const obj = JSON.parse(fs.readFileSync(p, "utf8"));
       const env = obj.env ?? {};
       const errs: string[] = [];
-      if (env.ANTHROPIC_BASE_URL !== o.baseUrlAnthropic) errs.push(`ANTHROPIC_BASE_URL != ${o.baseUrlAnthropic}`);
+      if (env.ANTHROPIC_BASE_URL?.replace("//www.", "//") !== o.baseUrlAnthropic.replace("//www.", "//")) errs.push(`ANTHROPIC_BASE_URL != ${o.baseUrlAnthropic}`);
       if (!env.ANTHROPIC_AUTH_TOKEN) errs.push("ANTHROPIC_AUTH_TOKEN 缺失");
       return errs;
     } catch (e) { return [String(e)]; }
