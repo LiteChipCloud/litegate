@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import type { ToolAdapter } from "../types.js";
@@ -8,7 +9,7 @@ const NAME = "Trae";
 
 /** TRAE SOLO CN / Trae / Trae CN 等变体的 globalStorage SQLite */
 function storageFile(): string | null {
-  const base = path.join(process.env.HOME ?? "", "Library", "Application Support");
+  const base = path.join(homedir(), "Library", "Application Support");
   try {
     for (const d of fs.readdirSync(base)) {
       if (!/^TRAE/i.test(d)) continue;
@@ -34,7 +35,7 @@ export const traeAdapter: ToolAdapter = {
       id: ID,
       name: NAME,
       present: appInstalled() || !!storage,
-      configPath: storage ?? path.join(process.env.HOME ?? "", "Library", "Application Support", "TRAE SOLO CN", "User", "globalStorage", "state.vscdb"),
+      configPath: storage ?? path.join(homedir(), "Library", "Application Support", "TRAE SOLO CN", "User", "globalStorage", "state.vscdb"),
       configExists: !!storage,
       detail: "配置在 state.vscdb（SQLite），自定义模型 Key 经 Electron safeStorage 加密，程序化写入待 PoC（docs/tool-config-storage.md）",
     };

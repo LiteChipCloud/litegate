@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -10,7 +11,7 @@ const ID = "zcode";
 const NAME = "ZCode";
 
 function configFile(): string {
-  return path.join(process.env.HOME ?? "", ".zcode", "v2", "provider_config.json");
+  return path.join(homedir(), ".zcode", "v2", "provider_config.json");
 }
 
 interface ProviderRule {
@@ -112,5 +113,5 @@ export const zcodeAdapter: ToolAdapter = {
 };
 
 function home(...p: string[]): string {
-  return path.join(process.env.HOME ?? "", ...p);
+  return path.join(homedir(), ...p);
 }

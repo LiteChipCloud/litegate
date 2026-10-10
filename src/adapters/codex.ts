@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import TOML from "@iarna/toml";
@@ -13,7 +14,7 @@ const MARK_BEGIN = "# >>> LiteGate begin (managed by @litechipcloud/litegate) <<
 const MARK_END = "# <<< LiteGate end <<<";
 
 function configFile(): string {
-  return path.join(process.env.HOME ?? "", ".codex", "config.toml");
+  return path.join(homedir(), ".codex", "config.toml");
 }
 
 export const codexAdapter: ToolAdapter = {
@@ -29,7 +30,7 @@ export const codexAdapter: ToolAdapter = {
     // 幂等：先移除旧 LiteGate 标记段
     text = text.replace(new RegExp(`${MARK_BEGIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?${MARK_END.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\n?`, "g"), "");
     const defaultModel = o.defaultModelKey;
-    const catalogPath = writeCodexCatalog(o.chatModels, process.env.HOME ?? "", o.dryRun);
+    const catalogPath = writeCodexCatalog(o.chatModels, homedir(), o.dryRun);
     const block = `${MARK_BEGIN}
 model_provider = "litegate"
 model = "${defaultModel}"

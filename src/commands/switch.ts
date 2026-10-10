@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import TOML from "@iarna/toml";
@@ -8,7 +9,7 @@ import { backupFile, readManifest } from "../core/backup.js";
 const BASE_ANTHROPIC = "https://www.litechipcloud.cn";
 
 function patchClaudeCode(model: string): string | null {
-  const p = path.join(process.env.HOME ?? "", ".claude", "settings.json");
+  const p = path.join(homedir(), ".claude", "settings.json");
   if (!fs.existsSync(p)) return null;
   const obj = JSON.parse(fs.readFileSync(p, "utf8"));
   obj.model = model;
@@ -19,7 +20,7 @@ function patchClaudeCode(model: string): string | null {
 }
 
 function patchCodex(model: string): string | null {
-  const p = path.join(process.env.HOME ?? "", ".codex", "config.toml");
+  const p = path.join(homedir(), ".codex", "config.toml");
   if (!fs.existsSync(p)) return null;
   let text = fs.readFileSync(p, "utf8");
   if (!text.includes('model_provider = "litegate"')) return null;
@@ -32,7 +33,7 @@ function patchCodex(model: string): string | null {
 }
 
 function patchZCode(model: string): string | null {
-  const p = path.join(process.env.HOME ?? "", ".zcode", "v2", "provider_config.json");
+  const p = path.join(homedir(), ".zcode", "v2", "provider_config.json");
   if (!fs.existsSync(p)) return null;
   const root = JSON.parse(fs.readFileSync(p, "utf8"));
   const rules = root?.config?.providerConfigRules?.providerRules ?? [];

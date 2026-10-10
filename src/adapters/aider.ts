@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import type { ToolAdapter } from "../types.js";
@@ -8,10 +9,10 @@ const ID = "aider";
 const NAME = "Aider";
 
 function getEnvPath(): string {
-  return path.join(process.env.HOME ?? "", ".env");
+  return path.join(homedir(), ".env");
 }
 function getConfPath(): string {
-  return path.join(process.env.HOME ?? "", ".aider.conf.yml");
+  return path.join(homedir(), ".aider.conf.yml");
 }
 
 export const aiderAdapter: ToolAdapter = {

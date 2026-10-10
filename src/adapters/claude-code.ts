@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import type { ToolAdapter } from "../types.js";
@@ -9,7 +10,7 @@ const ID = "claude-code";
 const NAME = "Claude Code";
 
 function configPath(): string {
-  return path.join(process.env.HOME ?? "", ".claude", "settings.json");
+  return path.join(homedir(), ".claude", "settings.json");
 }
 
 export const claudeCodeAdapter: ToolAdapter = {

@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import yaml from "js-yaml";
@@ -10,7 +11,7 @@ const ID = "minimax-code";
 const NAME = "MiniMax Code";
 
 function configFile(): string {
-  return path.join(process.env.HOME ?? "", ".minimax", "config.yaml");
+  return path.join(homedir(), ".minimax", "config.yaml");
 }
 
 export const minimaxCodeAdapter: ToolAdapter = {

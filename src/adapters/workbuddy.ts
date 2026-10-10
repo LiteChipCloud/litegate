@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import type { ToolAdapter } from "../types.js";
@@ -8,7 +9,7 @@ const NAME = "WorkBuddy";
 
 /** 官方自定义模型配置：明文 JSON，保存后约 1s 热重载 */
 function configFile(): string {
-  return path.join(process.env.HOME ?? "", ".workbuddy", "models.json");
+  return path.join(homedir(), ".workbuddy", "models.json");
 }
 
 function appInstalled(): boolean {
