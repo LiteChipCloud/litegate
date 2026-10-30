@@ -82,6 +82,14 @@ export const claudeCodeAdapter: ToolAdapter = {
       env.ANTHROPIC_AUTH_TOKEN = o.apiKey;
       changes.push("env.ANTHROPIC_AUTH_TOKEN");
     }
+    // 隐私加固：关掉 Claude Code 的非必要流量（错误上报/反馈问卷/市场检查/自动更新检查）。
+    // 对话/代码本来就只发 ANTHROPIC_BASE_URL（= LiteGate），此开关让"其余"流量也归零。
+    // 用户已显式设值（"1"=已加固跳过，"0"=想开遥测则尊重）都不动，只补未设置的。
+    const PRIVACY_KEY = "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC";
+    if (env[PRIVACY_KEY] === undefined) {
+      env[PRIVACY_KEY] = "1";
+      changes.push(`env.${PRIVACY_KEY}（隐私加固）`);
+    }
     obj.env = env;
     // 同步 /model 选择器（Claude Code 2.1+）。increment 模式下若用户已有环境变量
     // 指向其他服务则不改 env，但 modelPicker 仍写入——它只影响选择器展示，不改变路由。
