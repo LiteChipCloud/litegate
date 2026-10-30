@@ -118,6 +118,26 @@ wire_api = "chat"
 
 > CLI 只配置**你本机已安装**的工具——支持矩阵是兼容性清单，不是安装清单。
 
+## 🎛 Claude Code `/model` 菜单
+
+`litegate init` 会把 LiteGate 在售的对话模型写进 Claude Code 的 `modelPicker`
+（`~/.claude/settings.json`），`/model` 菜单直接列出网关模型，不用记名字。
+
+**VSCode 扩展**
+
+<img src="assets/claude-code-model-picker-vscode.png" alt="VSCode 的 /model 菜单：GLM-5.3 / GLM-5.3-Flash / DeepSeek V4 Pro / DeepSeek Flash / MiniMax M3 等" width="820">
+
+**CLI（`claude` → `/model`）**
+
+<img src="assets/claude-code-model-picker-cli.png" alt="Claude Code CLI 的 /model 菜单，Custom model 段落列出 LiteGate 在售模型" width="820">
+
+菜单先列 Claude Code 内置档位，随后是 LiteGate 模型（标注 `Custom model`），
+默认项带 `（默认）`。截图为真实环境：接入后内置 Claude 档位已不可用
+（2026-10 Claude 已从网关下线），实际选择下面这些国产模型。
+
+> 需要 Claude Code 2.1+；旧版本忽略该字段。配置只从用户级 settings 读取，
+> 只影响本机、不写入项目仓库。模型增减后重跑 `litegate init` 即可刷新。
+
 ## 💡 为什么用 LiteGate Cli
 
 - **批量接入**：一条命令，本机全部 AI 编程工具一次性接上 LiteGate——不用挨个工具手工改配置
@@ -134,6 +154,9 @@ wire_api = "chat"
 ```bash
 npx @litechipcloud/litegate init
 ```
+
+`litegate init` also populates Claude Code's `modelPicker`, so the `/model` menu lists the
+gateway models with readable labels (see screenshots above).
 
 See the Chinese documentation above for full details — the configuration examples are language-agnostic.
 
@@ -156,10 +179,3 @@ See the Chinese documentation above for full details — the configuration examp
 
 [MIT](LICENSE)
 
-## Claude Code `/model` 菜单
-
-`litegate init` 会把 LiteGate 在售的对话模型写进 Claude Code 的 `modelPicker`
-（`~/.claude/settings.json`），`/model` 菜单直接列出网关模型，不用记名字。
-
-> 需要 Claude Code 2.1+；旧版本会忽略该字段。该配置只从用户级 settings 读取，
-> 只影响本机，不会写入项目仓库。模型增减后重跑 `litegate init` 即可刷新。
