@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="poster.png" alt="LiteGate — 云崽 & 芯宝 陪您开跑" width="900">
-
 # LiteGate Cli
 
 **一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate**
