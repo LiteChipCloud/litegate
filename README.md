@@ -6,7 +6,7 @@
 
 **一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate**
 
-[![models](https://img.shields.io/badge/models-13-3FC8FF)](https://www.litechipcloud.cn)
+[![models](https://img.shields.io/badge/models-10-3FC8FF)](https://www.litechipcloud.cn)
 [![free tier](https://img.shields.io/badge/free-tier-4ADE80)](https://www.litechipcloud.cn)
 [![context](https://img.shields.io/badge/context-1M-F5C86B)](https://www.litechipcloud.cn)
 [![protocol](https://img.shields.io/badge/OpenAI%20%2F%20Claude-compatible-3FC8FF)](https://www.litechipcloud.cn)
@@ -25,7 +25,7 @@
 
 ## ✨ 这是什么
 
-**LiteGate** 是一站式大模型 API 网关：一个 Key 通吃 Claude / GLM / DeepSeek / MiniMax / Agnes 等 13 款模型，OpenAI 与 Claude 双协议兼容，长期免费模型，全线 1M 上下文。
+**LiteGate** 是一站式大模型 API 网关：一个 Key 通吃 GLM / DeepSeek / MiniMax / Agnes 等 10 款模型，OpenAI 与 Claude 双协议兼容，长期免费模型，全线 1M 上下文。
 
 **LiteGate Cli** 解决最后一个痛点：每款 AI 编程工具的自定义模型配置格式都不一样——
 
@@ -75,22 +75,23 @@ wire_api = "chat"
 
 </details>
 
-## 📊 模型与定价（2026-10-08 起）
+## 📊 模型与定价（2026-10-31 起）
 
 | 模型 | 上下文 | 价格 |
 |---|---|---|
-| Claude Opus 5.5 | 1M | ¥0.50 /次 |
-| **Claude Sonnet 5.5** 🆕 | 1M | ¥0.20 /次 |
-| Claude Haiku 4.5 | 200K | ¥0.05 /次 |
+| **GLM-5.3-Flash** ⭐ | 1M | ¥0.38 / ¥1.33 每百万 |
 | GLM-5.3 | 1M | ¥7.2 / ¥25.2 每百万 |
-| GLM-5.3-Flash | 1M | ¥0.38 / ¥1.33 每百万 |
-| DeepSeek V4 Pro | 1M | ¥5 / ¥15 每百万 |
 | DeepSeek Flash（4.1） | 1M | ¥1 / ¥4 每百万 |
+| DeepSeek V4 Pro | 1M | ¥5 / ¥15 每百万 |
+| MiniMax M3.1-Flash | 1M | ¥2 / ¥8 每百万 |
 | MiniMax M3 | 1M | ¥2.1 / ¥8.4 每百万 |
-| **MiniMax M3.1-Flash** | 1M | ¥2 / ¥8 每百万 |
 | Agnes 3.0 / 2.5 Flash · Agnes 图像 2.5 | 128K | **长期免费** |
+| WeMM-Embedding-2B（向量） | — | ¥0.2085 /次 |
 
-> Claude 系列按次计费；其余按 token（输入/输出）。价格可能调整，以控制台为准。
+> 全部按 token 计费（输入/输出），Agnes 与图像模型免费；实时价格以 `litegate models` 为准。
+>
+> 2026-10 Claude 全系（Opus/Sonnet/Haiku/Fable）已从网关下线，不再提供。
+> 原先依赖 Claude 四档的工具（如 Claude Code）请用 `litegate init` 重新同步模型菜单。
 
 ## 🛟 命令
 
@@ -147,7 +148,7 @@ wire_api = "chat"
 
 ## 🌐 English
 
-**LiteGate** is an all-in-one LLM API gateway: one API key for Claude, GLM, DeepSeek, MiniMax, Agnes and 13 models in total — OpenAI & Anthropic compatible, permanently free models, 1M context across the lineup.
+**LiteGate** is an all-in-one LLM API gateway: one API key for GLM, DeepSeek, MiniMax, Agnes and 10 models in total — OpenAI & Anthropic compatible, permanently free models, 1M context across the lineup.
 
 **LiteGate Cli** wires all your AI coding agents (Claude Code, Codex, ZCode, MiniMax Code and more) to LiteGate in one command:
 

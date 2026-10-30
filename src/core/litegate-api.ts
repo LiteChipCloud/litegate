@@ -17,7 +17,9 @@ export function chatModels(models: LiteGateModel[]): LiteGateModel[] {
 }
 
 /** 默认模型偏好序（质量优先），取第一个在售的；禁止盲取接口第一条 */
-const DEFAULT_MODEL_PREFERENCE = ["claude-sonnet-5-5", "glm-5.3-flash", "minimax-m3.1-flash"];
+// 2026-10-31: 移除 claude-sonnet-5-5——Claude 已于 2026-10 从网关全量下线，
+// 留着死项会让偏好序首位永远落空（此前靠后面的 glm-5.3-flash 兜底）。
+const DEFAULT_MODEL_PREFERENCE = ["glm-5.3-flash", "minimax-m3.1-flash", "glm-5.3"];
 
 export function pickDefaultModel(chat: LiteGateModel[]): string {
   for (const key of DEFAULT_MODEL_PREFERENCE) {
