@@ -100,6 +100,7 @@ wire_api = "chat"
 | `litegate status` | 查看本机 AI 工具与接入状态 |
 | `litegate models` | 实时模型与价格列表 |
 | `litegate switch <model>` | 一键切换默认模型 |
+| `litegate init`（重复执行） | 刷新 Claude Code 的 `/model` 菜单（modelPicker） |
 | `litegate rollback` | 一键回滚全部修改 |
 | `litegate doctor` | 环境诊断 |
 
@@ -154,3 +155,11 @@ See the Chinese documentation above for full details — the configuration examp
 ## License
 
 [MIT](LICENSE)
+
+## Claude Code `/model` 菜单
+
+`litegate init` 会把 LiteGate 在售的对话模型写进 Claude Code 的 `modelPicker`
+（`~/.claude/settings.json`），`/model` 菜单直接列出网关模型，不用记名字。
+
+> 需要 Claude Code 2.1+；旧版本会忽略该字段。该配置只从用户级 settings 读取，
+> 只影响本机，不会写入项目仓库。模型增减后重跑 `litegate init` 即可刷新。
