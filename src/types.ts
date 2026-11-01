@@ -52,8 +52,6 @@ export interface ToolInstallInfo {
   detail?: string;
 }
 
-export interface ChangeRecord { file: string; action: string; detail?: string }
-
 export interface ToolAdapter {
   id: string;
   name: string;

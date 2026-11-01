@@ -5,7 +5,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "LiteGate Cli —— 一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate（13 款模型 · 双协议 · 长期免费模型）",
+  "description": "LiteGate Cli —— 一条命令，把 Claude Code / Codex / ZCode / MiniMax Code 等 AI 编程工具全部接上 LiteGate（10 款模型 · 双协议 · 长期免费模型）",
   "license": "MIT",
   "type": "module",
   "engines": {
