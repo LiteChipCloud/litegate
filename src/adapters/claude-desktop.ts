@@ -2,10 +2,15 @@ import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
+// @ts-expect-error write-file-atomic 未随包提供类型声明（CJS 包，sync 版本挂在 .sync 上）
+import writeFileAtomic from "write-file-atomic";
 import type { ToolAdapter } from "../types.js";
 import type { ConfigureOptions, ToolInstallInfo, AdapterResult } from "../types.js";
 import { assertValidJSON } from "../core/validate.js";
 import { backupFile } from "../core/backup.js";
+
+/** 原子写（temp 文件 + rename，保留既有 mode/chown），签名同 fs.writeFileSync。 */
+const writeFileSyncAtomic: typeof fs.writeFileSync = writeFileAtomic.sync;
 
 const ID = "claude-desktop";
 const NAME = "Claude Desktop";
@@ -71,7 +76,7 @@ export const claudeDesktopAdapter: ToolAdapter = {
         // 目录在但没有 profile：新建一个并注册为 applied
         const id = "litegate-" + Date.now().toString(36);
         profilePath = path.join(dir, "configLibrary", `${id}.json`);
-        fs.writeFileSync(metaPath, JSON.stringify({ appliedId: id, entries: [{ id, name: "Default" }] }, null, 2) + "\n");
+        writeFileSyncAtomic(metaPath, JSON.stringify({ appliedId: id, entries: [{ id, name: "Default" }] }, null, 2) + "\n");
       }
     } else {
       // 全新安装：创建完整结构
@@ -80,7 +85,7 @@ export const claudeDesktopAdapter: ToolAdapter = {
       const id = "litegate-" + Date.now().toString(36);
       profilePath = path.join(dir, "configLibrary", `${id}.json`);
       metaPath = path.join(dir, "configLibrary", "_meta.json");
-      fs.writeFileSync(metaPath, JSON.stringify({ appliedId: id, entries: [{ id, name: "Default" }] }, null, 2) + "\n");
+      writeFileSyncAtomic(metaPath, JSON.stringify({ appliedId: id, entries: [{ id, name: "Default" }] }, null, 2) + "\n");
     }
 
     let root: Record<string, any> = {};
@@ -98,7 +103,7 @@ export const claudeDesktopAdapter: ToolAdapter = {
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes: ["gateway=" + o.baseUrlAnthropic] };
     // 全新 profile 文件尚不存在（新建分支），此时无可备份内容——只对已有文件做备份
     if (fs.existsSync(profilePath)) backupFile(ID, profilePath, "upsert-gateway");
-    fs.writeFileSync(profilePath, out);
+    writeFileSyncAtomic(profilePath, out);
     fs.chmodSync(profilePath, 0o600);
     return { ok: true, supported: true, wrote: true, changes: [`inferenceGateway（${path.basename(profilePath)}，重启 Claude 生效）`] };
   },

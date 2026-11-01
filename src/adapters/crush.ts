@@ -1,10 +1,15 @@
 import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
+// @ts-expect-error write-file-atomic 未随包提供类型声明（CJS 包，sync 版本挂在 .sync 上）
+import writeFileAtomic from "write-file-atomic";
 import type { ToolAdapter } from "../types.js";
 import type { AdapterResult, ConfigureOptions, ToolInstallInfo } from "../types.js";
 import { assertValidJSON } from "../core/validate.js";
 import { backupFile } from "../core/backup.js";
+
+/** 原子写（temp 文件 + rename，保留既有 mode/chown），签名同 fs.writeFileSync。 */
+const writeFileSyncAtomic: typeof fs.writeFileSync = writeFileAtomic.sync;
 
 const ID = "crush";
 const NAME = "Crush";
@@ -49,7 +54,7 @@ export const crushAdapter: ToolAdapter = {
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes };
     if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
     else backupFile(ID, file, "upsert-provider");
-    fs.writeFileSync(file, out);
+    writeFileSyncAtomic(file, out);
     return { ok: true, supported: true, wrote: true, changes };
   },
   verify(): string[] {

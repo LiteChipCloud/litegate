@@ -1,8 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
+// @ts-expect-error write-file-atomic 未随包提供类型声明（CJS 包，sync 版本挂在 .sync 上）
+import writeFileAtomic from "write-file-atomic";
 import type { AdapterResult, ConfigureOptions } from "../types.js";
 import { assertValidJSON } from "../core/validate.js";
 import { backupFile } from "../core/backup.js";
+
+/** 原子写（temp 文件 + rename，保留既有 mode/chown），签名同 fs.writeFileSync。 */
+const writeFileSyncAtomic: typeof fs.writeFileSync = writeFileAtomic.sync;
 
 /**
  * 腾讯系工具（CodeBuddy / WorkBuddy）自定义模型配置的共同写入逻辑。
@@ -58,6 +63,6 @@ export function upsertCustomModelsEntry(o: UpsertCustomModelsOptions): AdapterRe
   if (cfg.dryRun) return { ok: true, supported: true, wrote: false, changes };
   if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
   else backupFile(tool, file, "upsert-models");
-  fs.writeFileSync(file, out);
+  writeFileSyncAtomic(file, out);
   return { ok: true, supported: true, wrote: true, changes };
 }

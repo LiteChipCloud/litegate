@@ -2,11 +2,16 @@ import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import TOML from "@iarna/toml";
+// @ts-expect-error write-file-atomic 未随包提供类型声明（CJS 包，sync 版本挂在 .sync 上）
+import writeFileAtomic from "write-file-atomic";
 import type { ToolAdapter } from "../types.js";
 import type { ConfigureOptions, ToolInstallInfo, AdapterResult } from "../types.js";
 import { assertValidTOML } from "../core/validate.js";
 import { backupFile } from "../core/backup.js";
 import { writeCodexCatalog } from "../core/catalog.js";
+
+/** 原子写（temp 文件 + rename，保留既有 mode/chown），签名同 fs.writeFileSync。 */
+const writeFileSyncAtomic: typeof fs.writeFileSync = writeFileAtomic.sync;
 
 const ID = "codex";
 const NAME = "Codex CLI";
@@ -55,7 +60,7 @@ ${MARK_END}
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes };
     if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
     else backupFile(ID, file, "prepend-managed-block");
-    fs.writeFileSync(file, out);
+    writeFileSyncAtomic(file, out);
     return { ok: true, supported: true, wrote: true, changes };
   },
   verify(): string[] {

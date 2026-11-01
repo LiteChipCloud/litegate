@@ -1,6 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+// @ts-expect-error write-file-atomic 未随包提供类型声明（CJS 包，sync 版本挂在 .sync 上）
+import writeFileAtomic from "write-file-atomic";
+
+/** 原子写（temp 文件 + rename，保留既有 mode/chown），签名同 fs.writeFileSync。 */
+const writeFileSyncAtomic: typeof fs.writeFileSync = writeFileAtomic.sync;
 
 export interface BackupEntry {
   ts: string;
@@ -39,7 +44,7 @@ export function backupFile(tool: string, file: string, action: string): string {
   const m = readManifest();
   m.operations.push({ ts: new Date().toISOString(), tool, file, backup, action, patch: [] });
   fs.mkdirSync(path.dirname(manifestPath()), { recursive: true });
-  fs.writeFileSync(manifestPath(), JSON.stringify(m, null, 2));
+  writeFileSyncAtomic(manifestPath(), JSON.stringify(m, null, 2));
   return backup;
 }
 
@@ -47,7 +52,7 @@ export function recordDryRun(tool: string, file: string, action: string): void {
   const m = readManifest();
   m.operations.push({ ts: new Date().toISOString(), tool, file, backup: "", action: action + " (dry-run)", patch: [] });
   fs.mkdirSync(path.dirname(manifestPath()), { recursive: true });
-  fs.writeFileSync(manifestPath(), JSON.stringify(m, null, 2));
+  writeFileSyncAtomic(manifestPath(), JSON.stringify(m, null, 2));
 }
 
 export function rollbackAll(): { restored: string[]; errors: string[] } {
@@ -66,6 +71,6 @@ export function rollbackAll(): { restored: string[]; errors: string[] } {
       errors.push(`${op.file}: ${(e as Error).message}`);
     }
   }
-  fs.writeFileSync(manifestPath(), JSON.stringify({ version: 1, operations: [] }, null, 2));
+  writeFileSyncAtomic(manifestPath(), JSON.stringify({ version: 1, operations: [] }, null, 2));
   return { restored, errors };
 }
