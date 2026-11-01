@@ -90,13 +90,45 @@ describe("opencode", () => {
     expect(lg.models["glm-5.3-flash"].limit.context).toBe(1_000_000);
   });
 
-  it(".jsonc（带注释）→ 拒绝修改不破坏；普通 .json 正常", () => {
+  it(".jsonc（带注释）→ 拒绝改写保住注释，错误信息明确指引", () => {
     fs.mkdirSync(path.dirname(opencodeFile()), { recursive: true });
     fs.writeFileSync(path.join(tmpHome(), ".config", "opencode", "opencode.jsonc"), '{ // 注释\n"theme": "dark"\n}');
     const res = opencodeAdapter.configure(makeOptions());
     expect(res.ok).toBe(false);
-    expect(res.error).toContain("拒绝修改");
+    expect(res.error).toContain("为保住您的注释未自动改写");
+    expect(res.error).toContain('provider "litegate"');
     expect(fs.readFileSync(path.join(tmpHome(), ".config", "opencode", "opencode.jsonc"), "utf8")).toContain("注释");
+  });
+
+  it("带注释文件 verify 可正确读取（注释/尾逗号不再误报，坏 JSON 仍报无法解析）", () => {
+    fs.mkdirSync(path.dirname(opencodeFile()), { recursive: true });
+
+    // 注释文件但缺 litegate → 报「缺失」而不是解析失败
+    fs.writeFileSync(opencodeFile(), '{ // 注释\n"theme": "dark"\n}');
+    expect(opencodeAdapter.verify(makeOptions())).toEqual(["provider.litegate 缺失"]);
+
+    // 注释 + 尾逗号但 litegate 齐全 → 校验通过
+    fs.writeFileSync(
+      opencodeFile(),
+      [
+        "// LiteGate 手动接入",
+        "{",
+        '  "provider": {',
+        '    "litegate": {',
+        '      "npm": "@ai-sdk/openai-compatible",',
+        '      "name": "LiteGate",',
+        '      "options": { "baseURL": "https://www.litechipcloud.cn/v1", "apiKey": "sk-manual" },',
+        "    },",
+        "  },",
+        '  "theme": "dark", // 尾注释',
+        "}",
+      ].join("\n"),
+    );
+    expect(opencodeAdapter.verify(makeOptions())).toEqual([]);
+
+    // 真·语法损坏 → 仍报无法解析
+    fs.writeFileSync(opencodeFile(), "{broken");
+    expect(opencodeAdapter.verify(makeOptions())[0]).toContain("无法解析");
   });
 });
 
@@ -113,10 +145,14 @@ describe("zed", () => {
     expect(JSON.stringify(readJSON(zedFile()))).not.toContain("sk-lcc-test-key"); // key 不落盘
   });
 
-  it("JSONC（Zed 允许注释）→ 拒绝修改；verify 检查 LITEGATE_API_KEY", () => {
+  it("JSONC（Zed 允许注释）→ 拒绝改写保住注释，错误信息明确；verify 检查 LITEGATE_API_KEY", () => {
     fs.mkdirSync(path.dirname(zedFile()), { recursive: true });
     fs.writeFileSync(zedFile(), '{ // 用户注释\n"theme": "one"\n}');
-    expect(zedAdapter.configure(makeOptions()).ok).toBe(false);
+    const res = zedAdapter.configure(makeOptions());
+    expect(res.ok).toBe(false);
+    expect(res.error).toContain("为保住您的注释未自动改写");
+    expect(res.error).toContain('provider "litegate"');
+    expect(fs.readFileSync(zedFile(), "utf8")).toContain("用户注释"); // 原文件未被改写
 
     fs.writeFileSync(zedFile(), "{}");
     const errs = zedAdapter.verify(makeOptions());
@@ -126,6 +162,42 @@ describe("zed", () => {
     zedAdapter.configure(makeOptions());
     expect(zedAdapter.verify(makeOptions())).toEqual([]);
     delete process.env.LITEGATE_API_KEY;
+  });
+
+  it("带注释文件 verify 可正确读取（注释/尾逗号不再误报，坏 JSON 仍报无法解析）", () => {
+    fs.mkdirSync(path.dirname(zedFile()), { recursive: true });
+
+    // 注释文件但缺 litegate → 报「缺失」而不是解析失败
+    fs.writeFileSync(zedFile(), '{ // 用户注释\n"theme": "one"\n}');
+    const errs = zedAdapter.verify(makeOptions());
+    expect(errs).toContain("openai_compatible.litegate 缺失");
+    expect(errs.some((e) => e.includes("LITEGATE_API_KEY 未设置"))).toBe(true);
+
+    // 注释 + 尾逗号但 litegate 齐全 → 校验通过
+    process.env.LITEGATE_API_KEY = "sk-lcc-test-key-000000000000";
+    fs.writeFileSync(
+      zedFile(),
+      [
+        "// LiteGate 手动接入（Zed 支持 JSONC 注释）",
+        "{",
+        '  "language_models": {',
+        '    "openai_compatible": {',
+        '      "litegate": {',
+        '        "api_url": "https://www.litechipcloud.cn/v1",',
+        '        "available_models": [{ "name": "glm-5.3-flash", "display_name": "GLM-5.3-Flash", "max_tokens": 1000000 }],',
+        "      },",
+        "    },",
+        "  },",
+        '  "theme": "one", // 尾注释',
+        "}",
+      ].join("\n"),
+    );
+    expect(zedAdapter.verify(makeOptions())).toEqual([]);
+    delete process.env.LITEGATE_API_KEY;
+
+    // 真·语法损坏 → 仍报无法解析
+    fs.writeFileSync(zedFile(), "{broken");
+    expect(zedAdapter.verify(makeOptions())[0]).toContain("无法解析");
   });
 });
 

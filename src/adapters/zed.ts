@@ -1,14 +1,23 @@
 import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
+import { parse as parseJsonc, type ParseError } from "jsonc-parser";
 import type { ToolAdapter } from "../types.js";
 import type { AdapterResult, ConfigureOptions, ToolInstallInfo } from "../types.js";
 import { assertValidJSON } from "../core/validate.js";
 import { backupFile } from "../core/backup.js";
+// @ts-expect-error write-file-atomic 未随包提供类型声明（CJS 包，sync 版本挂在 .sync 上）
+import writeFileAtomic from "write-file-atomic";
+
+/** 原子写（temp 文件 + rename，保留既有 mode/chown），签名同 fs.writeFileSync。 */
+const writeFileSyncAtomic: typeof fs.writeFileSync = writeFileAtomic.sync;
 
 const ID = "zed";
 const NAME = "Zed";
 const KEY_ENV = "LITEGATE_API_KEY";
+
+/** configure 对「可读但非标准 JSON」文件的统一拒绝口径（保住用户注释，写入仍保守） */
+const JSONC_WRITE_REFUSE = `文件含注释/非标准 JSON，为保住您的注释未自动改写；可在工具内手动添加 provider "litegate"，或移除注释后重跑`;
 
 /**
  * Zed 配置：~/.config/zed/settings.json。
@@ -17,10 +26,27 @@ const KEY_ENV = "LITEGATE_API_KEY";
  *   - API key 禁止写入 settings.json——从环境变量读，
  *     变量名由 provider id 派生：`litegate` → LITEGATE_API_KEY（大写下划线 + _API_KEY）。
  * 因此本适配器只写 provider 与模型表，key 交给用户设 env（verify 会检查并提示）。
- * settings.json 是 Zed 主配置且允许 JSONC 注释：解析失败一律拒绝修改，绝不破坏用户文件。
+ * settings.json 是 Zed 主配置且允许 JSONC 注释：**读取宽容**（jsonc-parser 容忍注释/尾逗号，
+ * verify 不再误报），**写入保守**（非标准 JSON 一律拒绝改写，绝不 stringify 抹掉用户注释）。
  */
 function configPath(): string {
   return path.join(homedir(), ".config", "zed", "settings.json");
+}
+
+/**
+ * 宽容读取用户配置：注释/尾逗号均可解析（allowTrailingComma）。
+ * 返回 null = 真不可解析（语法损坏/根不是对象）→ 拒绝修改；
+ * strict=false = 内容可读但非标准 JSON（含注释或尾逗号）→ 可用于读取校验，configure 写入仍拒绝。
+ */
+function readConfig(text: string): { root: Record<string, any>; strict: boolean } | null {
+  const errors: ParseError[] = [];
+  const parsed = parseJsonc(text, errors, { allowTrailingComma: true });
+  if (errors.length > 0 || parsed === undefined || typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return null;
+  }
+  let strict = true;
+  try { JSON.parse(text); } catch { strict = false; }
+  return { root: parsed as Record<string, any>, strict };
 }
 
 export const zedAdapter: ToolAdapter = {
@@ -43,8 +69,10 @@ export const zedAdapter: ToolAdapter = {
     const file = configPath();
     let root: Record<string, any> = {};
     if (fs.existsSync(file)) {
-      try { root = JSON.parse(fs.readFileSync(file, "utf8")); }
-      catch { return { ok: false, supported: true, wrote: false, changes: [], error: `${file} 含注释或非标准 JSON，拒绝修改（Zed 支持 JSONC；请在 Zed 设置内手动添加 LiteGate provider）` }; }
+      const read = readConfig(fs.readFileSync(file, "utf8"));
+      if (!read) return { ok: false, supported: true, wrote: false, changes: [], error: `${file} 无法解析（非 JSON/JSONC），拒绝修改` };
+      if (!read.strict) return { ok: false, supported: true, wrote: false, changes: [], error: `${file} ${JSONC_WRITE_REFUSE}` };
+      root = read.root;
     }
     root.language_models ??= {};
     root.language_models.openai_compatible ??= {};
@@ -66,18 +94,19 @@ export const zedAdapter: ToolAdapter = {
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes };
     if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
     else backupFile(ID, file, "upsert-provider");
-    fs.writeFileSync(file, out);
+    writeFileSyncAtomic(file, out);
     return { ok: true, supported: true, wrote: true, changes };
   },
   verify(): string[] {
     const errs: string[] = [];
     const p = configPath();
     if (!fs.existsSync(p)) return [`${p} 不存在`];
-    try {
-      const root = JSON.parse(fs.readFileSync(p, "utf8"));
-      const lg = root?.language_models?.openai_compatible?.litegate;
+    const read = readConfig(fs.readFileSync(p, "utf8"));
+    if (!read) errs.push(`${p} 无法解析（非 JSON/JSONC），请检查 settings.json 语法`);
+    else {
+      const lg = read.root?.language_models?.openai_compatible?.litegate;
       if (!lg) errs.push("openai_compatible.litegate 缺失");
-    } catch (e) { errs.push(String(e)); }
+    }
     if (!process.env[KEY_ENV]) errs.push(`环境变量 ${KEY_ENV} 未设置（Zed 不支持配置文件内放 key，请在 shell profile 里 export）`);
     return errs;
   },

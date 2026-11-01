@@ -1,22 +1,49 @@
 import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
+import { parse as parseJsonc, type ParseError } from "jsonc-parser";
 import type { ToolAdapter } from "../types.js";
 import type { AdapterResult, ConfigureOptions, ToolInstallInfo } from "../types.js";
 import { assertValidJSON } from "../core/validate.js";
 import { backupFile } from "../core/backup.js";
+// @ts-expect-error write-file-atomic 未随包提供类型声明（CJS 包，sync 版本挂在 .sync 上）
+import writeFileAtomic from "write-file-atomic";
+
+/** 原子写（temp 文件 + rename，保留既有 mode/chown），签名同 fs.writeFileSync。 */
+const writeFileSyncAtomic: typeof fs.writeFileSync = writeFileAtomic.sync;
 
 const ID = "opencode";
 const NAME = "OpenCode";
+
+/** configure 对「可读但非标准 JSON」文件的统一拒绝口径（保住用户注释，写入仍保守） */
+const JSONC_WRITE_REFUSE = `文件含注释/非标准 JSON，为保住您的注释未自动改写；可在工具内手动添加 provider "litegate"，或移除注释后重跑`;
 
 /**
  * sst/opencode 配置：~/.config/opencode/opencode.json（官方支持 .jsonc，检测到则优先沿用）。
  * 追加 provider.litegate（Coexist），key 直接进 options.apiKey（官方支持，另有 {env:VAR} 语法）。
  * schema 来源：opencode.ai/docs/providers。
+ * 读取宽容：jsonc-parser 容忍注释/尾逗号，verify 不再误报；写入保守：非标准 JSON 仍拒绝改写，
+ * 绝不 stringify 抹掉用户注释。
  */
 function configPaths(): string[] {
   const dir = path.join(homedir(), ".config", "opencode");
   return [path.join(dir, "opencode.json"), path.join(dir, "opencode.jsonc")];
+}
+
+/**
+ * 宽容读取用户配置：注释/尾逗号均可解析（allowTrailingComma）。
+ * 返回 null = 真不可解析（语法损坏/根不是对象）→ 拒绝修改；
+ * strict=false = 内容可读但非标准 JSON（含注释或尾逗号）→ 可用于读取校验，configure 写入仍拒绝。
+ */
+function readConfig(text: string): { root: Record<string, any>; strict: boolean } | null {
+  const errors: ParseError[] = [];
+  const parsed = parseJsonc(text, errors, { allowTrailingComma: true });
+  if (errors.length > 0 || parsed === undefined || typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return null;
+  }
+  let strict = true;
+  try { JSON.parse(text); } catch { strict = false; }
+  return { root: parsed as Record<string, any>, strict };
 }
 
 export const opencodeAdapter: ToolAdapter = {
@@ -38,13 +65,11 @@ export const opencodeAdapter: ToolAdapter = {
     const file = configPaths().find((p) => fs.existsSync(p)) ?? configPaths()[0];
     let root: Record<string, any> = {};
     if (fs.existsSync(file)) {
-      const text = fs.readFileSync(file, "utf8");
-      try {
-        root = JSON.parse(text);
-      } catch {
-        // .jsonc 允许注释：标准 JSON 解析失败即拒绝（绝不含糊地改写用户带注释的文件）
-        return { ok: false, supported: true, wrote: false, changes: [], error: `${file} 含注释或非标准 JSON，拒绝修改（请在 OpenCode 内手动添加 provider "litegate"）` };
-      }
+      const read = readConfig(fs.readFileSync(file, "utf8"));
+      if (!read) return { ok: false, supported: true, wrote: false, changes: [], error: `${file} 无法解析（非 JSON/JSONC），拒绝修改` };
+      // 读取宽容、写入保守：注释/尾逗号版能读懂但拒绝自动改写（stringify 全写会抹掉注释）
+      if (!read.strict) return { ok: false, supported: true, wrote: false, changes: [], error: `${file} ${JSONC_WRITE_REFUSE}` };
+      root = read.root;
     }
     root.provider ??= {};
     const models: Record<string, unknown> = {};
@@ -63,17 +88,16 @@ export const opencodeAdapter: ToolAdapter = {
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes };
     if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
     else backupFile(ID, file, "upsert-provider");
-    fs.writeFileSync(file, out);
+    writeFileSyncAtomic(file, out);
     return { ok: true, supported: true, wrote: true, changes };
   },
   verify(): string[] {
     const file = configPaths().find((p) => fs.existsSync(p));
     if (!file) return [`${configPaths()[0]} 不存在`];
-    try {
-      const root = JSON.parse(fs.readFileSync(file, "utf8"));
-      if (!root?.provider?.litegate) return ["provider.litegate 缺失"];
-      return [];
-    } catch (e) { return [String(e)]; }
+    const read = readConfig(fs.readFileSync(file, "utf8"));
+    if (!read) return [`${file} 无法解析（非 JSON/JSONC），请检查配置文件语法`];
+    if (!read.root?.provider?.litegate) return ["provider.litegate 缺失"];
+    return [];
   },
   restore(backup: string): void {
     const file = configPaths().find((p) => fs.existsSync(p)) ?? configPaths()[0];
