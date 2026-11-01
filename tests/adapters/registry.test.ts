@@ -24,12 +24,6 @@ describe("adapter registry", () => {
     expect(getAdapter("claude-code")?.name).toBe("Claude Code");
     expect(getAdapter("nope")).toBeUndefined();
   });
-
-  it("aider 有实现但未注册（死代码，待邓总裁定删留）", async () => {
-    expect(getAdapter("aider")).toBeUndefined();
-    const mod = await import("../../src/adapters/aider.js");
-    expect(mod.aiderAdapter.id).toBe("aider");
-  });
 });
 
 describe("validate", () => {

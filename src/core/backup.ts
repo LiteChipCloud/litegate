@@ -31,7 +31,10 @@ export function readManifest(): { version: number; operations: BackupEntry[] } {
 
 export function backupFile(tool: string, file: string, action: string): string {
   const ts = new Date().toISOString().replace(/[-:.TZ]/g, "");
-  const backup = `${file}.bak-litegate-${ts}`;
+  // 追加随机后缀：时间戳只到毫秒，同毫秒内对同一文件连续备份会同名互覆，
+  // 导致早期备份丢失、rollback 回不到最初版本
+  const rand = Math.random().toString(36).slice(2, 6);
+  const backup = `${file}.bak-litegate-${ts}-${rand}`;
   fs.copyFileSync(file, backup);
   const m = readManifest();
   m.operations.push({ ts: new Date().toISOString(), tool, file, backup, action, patch: [] });

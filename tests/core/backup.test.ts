@@ -19,9 +19,6 @@ beforeEach(() => {
   fs.rmSync(cliHome(), { recursive: true, force: true });
 });
 
-/** backupFile 的时间戳精确到毫秒：连续两次备份必须跨毫秒，否则路径碰撞互相覆盖 */
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 /** 守卫：manifest 必须落在临时 HOME 下，绝不写真实 ~/.litegate */
 describe("tmp-home 守卫", () => {
   it("cliHome() 位于临时 HOME 下", () => {
@@ -37,7 +34,7 @@ describe("backupFile", () => {
     const backup = backupFile("claude-code", file, "merge-env");
 
     expect(fs.existsSync(backup)).toBe(true);
-    expect(path.basename(backup)).toMatch(/^settings\.json\.bak-litegate-\d+$/);
+    expect(path.basename(backup)).toMatch(/^settings\.json\.bak-litegate-\d+-[a-z0-9]{4}$/);
     expect(fs.readFileSync(backup, "utf8")).toBe('{"v":1}');
 
     const manifest = readManifest();
@@ -47,13 +44,12 @@ describe("backupFile", () => {
     expect(op).toMatchObject({ tool: "claude-code", file, backup, action: "merge-env" });
   });
 
-  it("同一文件连续两次备份：两个副本互不顶掉，manifest 两条", async () => {
+  it("同一文件连续两次备份（含同毫秒内）：两个副本互不顶掉，manifest 两条", () => {
     const file = path.join(tmpHome(), "twice.json");
     fs.writeFileSync(file, "first");
     const bak1 = backupFile("codex", file, "a");
     fs.writeFileSync(file, "second");
-    await sleep(3); // 跨毫秒，避免时间戳碰撞
-    const bak2 = backupFile("codex", file, "b");
+    const bak2 = backupFile("codex", file, "b"); // 不跨毫秒也必须不同名（随机后缀）
 
     expect(bak1).not.toBe(bak2);
     expect(fs.readFileSync(bak1, "utf8")).toBe("first");
@@ -105,12 +101,11 @@ describe("rollbackAll", () => {
     expect(readManifest().operations).toEqual([]);
   });
 
-  it("同一文件两次修改：恢复到最初版本（逆序两次覆盖）", async () => {
+  it("同一文件两次修改：恢复到最初版本（逆序两次覆盖）", () => {
     const f = path.join(tmpHome(), "multi.json");
     fs.writeFileSync(f, "v1");
     backupFile("codex", f, "a");
     fs.writeFileSync(f, "v2");
-    await sleep(3); // 跨毫秒，避免时间戳碰撞
     backupFile("codex", f, "b");
     fs.writeFileSync(f, "v3");
 
