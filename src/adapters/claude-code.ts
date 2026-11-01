@@ -53,6 +53,7 @@ function buildModelPicker(o: ConfigureOptions): { options: { model: string; labe
 export const claudeCodeAdapter: ToolAdapter = {
   id: ID,
   name: NAME,
+  strategy: "switch",
   detect(): ToolInstallInfo {
     const p = configPath();
     return { id: ID, name: NAME, present: fs.existsSync(path.dirname(p)) || fs.existsSync(p), configPath: p, configExists: fs.existsSync(p) };

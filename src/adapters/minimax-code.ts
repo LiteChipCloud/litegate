@@ -17,6 +17,7 @@ function configFile(): string {
 export const minimaxCodeAdapter: ToolAdapter = {
   id: ID,
   name: NAME,
+  strategy: "coexist",
   detect(): ToolInstallInfo {
     const p = configFile();
     return { id: ID, name: NAME, present: fs.existsSync(path.dirname(p)), configPath: p, configExists: fs.existsSync(p) };

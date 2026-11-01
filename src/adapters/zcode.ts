@@ -29,6 +29,7 @@ interface ProviderRule {
 export const zcodeAdapter: ToolAdapter = {
   id: ID,
   name: NAME,
+  strategy: "coexist",
   detect(): ToolInstallInfo {
     const p = configFile();
     return { id: ID, name: NAME, present: fs.existsSync(home(".zcode")) || !!process.env.ZCODE_APP_VERSION, configPath: p, configExists: fs.existsSync(p) };

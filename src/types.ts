@@ -55,6 +55,8 @@ export interface ToolInstallInfo {
 export interface ToolAdapter {
   id: string;
   name: string;
+  /** 写入范式：switch=切换工具默认模型/端点；coexist=追加 LiteGate provider 与既有供应商共存 */
+  strategy: "switch" | "coexist";
   detect(): ToolInstallInfo;
   configure(o: ConfigureOptions, info: ToolInstallInfo): Promise<AdapterResult> | AdapterResult;
   verify(o: ConfigureOptions, info: ToolInstallInfo): string[];

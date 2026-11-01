@@ -105,17 +105,26 @@ wire_api = "chat"
 
 ## 🔧 支持的 AI 编程工具
 
-| 工具 | 状态 |
-|---|---|
-| Claude Code | ✅ 支持 |
-| Codex CLI | ✅ 支持 |
-| ZCode | ✅ 支持（深度集成） |
-| MiniMax Code | ✅ 支持 |
-| Continue | ✅ 支持 |
-| Trae / WorkBuddy | 🔄 适配中 |
-| Cursor | ⚠️ 需 Cursor Pro 订阅（自定义 API Key 为 Pro 功能） |
+| 工具 | 状态 | 接入方式 |
+|---|---|---|
+| Claude Code | ✅ 支持 | 切换默认（env + /model 菜单） |
+| Codex CLI | ✅ 支持 | 切换默认（托管段 + 模型目录） |
+| ZCode | ✅ 深度集成 | 追加 provider 共存 |
+| MiniMax Code | ✅ 支持 | 追加 provider 共存 |
+| Claude Desktop | ✅ 支持 | 第三方推理 Gateway profile |
+| Continue | ✅ 支持 | 追加模型条目共存 |
+| CodeBuddy | ✅ 支持 | 追加模型条目共存（热加载） |
+| WorkBuddy | ✅ 支持 | 追加模型条目共存（热加载） |
+| Crush | ✅ 支持 | 追加 provider 共存（模型自动发现） |
+| OpenCode | ✅ 支持 | 追加 provider 共存 |
+| Zed | ✅ 支持 | 追加 provider 共存（key 走 `LITEGATE_API_KEY` 环境变量） |
+| Qwen Code | ✅ 支持 | 切换默认（settings.json env 段） |
+| Trae | 🔄 V0.2 适配中 | Key 经 safeStorage 加密，程序化写入待 PoC |
+| Cursor | ⚠️ 受限 | 自定义 API Key 需 Cursor Pro 订阅，暂不自动配置 |
 
 > CLI 只配置**你本机已安装**的工具——支持矩阵是兼容性清单，不是安装清单。
+> 「追加共存」不改动工具里已有的其他供应商配置；「切换默认」只改默认端点/模型相关字段，
+> 两者都自动备份、可 `litegate rollback` 一键回滚。
 
 ## 🎛 Claude Code `/model` 菜单
 

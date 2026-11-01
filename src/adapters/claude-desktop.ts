@@ -42,6 +42,7 @@ function appRunning(): boolean {
 export const claudeDesktopAdapter: ToolAdapter = {
   id: ID,
   name: NAME,
+  strategy: "switch",
   detect(): ToolInstallInfo {
     const dir = dataDir();
     const p = dir ? profileFile(dir) : null;

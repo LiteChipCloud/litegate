@@ -64,3 +64,4 @@ VS Code、CodeBuddy（扩展）、Qoder（痕迹）、Cursor（dotdir）、Codei
 | 日期 | 版本 | 说明 |
 |---|---|---|
 | 2026-10-08 | v0.1 | 首版调研；V0.1 CLI 对两款工具 detect 已按真实路径升级，configure 待 PoC 后实装 |
+| 2026-11-02 | v0.3 | WorkBuddy 转正实装（实机确认裸数组形态）；CodeBuddy 同构实装（包装对象，官方文档）；两者共用 tencent-models-json 写入逻辑 |

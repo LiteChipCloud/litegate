@@ -2,12 +2,17 @@ import { homedir } from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import type { ToolAdapter } from "../types.js";
-import type { ConfigureOptions, ToolInstallInfo, AdapterResult } from "../types.js";
+import type { AdapterResult, ConfigureOptions, ToolInstallInfo } from "../types.js";
+import { upsertCustomModelsEntry } from "./tencent-models-json.js";
 
 const ID = "workbuddy";
 const NAME = "WorkBuddy";
 
-/** 官方自定义模型配置：明文 JSON，保存后约 1s 热重载 */
+/**
+ * 腾讯 WorkBuddy（CodeBuddy 内核）自定义模型配置：~/.workbuddy/models.json
+ * 官方明文 JSON，保存后 ~1s 热重载。2026-11-02 实机确认：顶层为裸数组（[]），
+ * 条目 schema 与 CodeBuddy 同构（docs/tool-config-storage.md）。
+ */
 function configFile(): string {
   return path.join(homedir(), ".workbuddy", "models.json");
 }
@@ -21,6 +26,7 @@ function appInstalled(): boolean {
 export const workbuddyAdapter: ToolAdapter = {
   id: ID,
   name: NAME,
+  strategy: "coexist",
   detect(): ToolInstallInfo {
     const p = configFile();
     const dirExists = fs.existsSync(path.dirname(p));
@@ -30,12 +36,30 @@ export const workbuddyAdapter: ToolAdapter = {
       present: appInstalled() || dirExists,
       configPath: p,
       configExists: fs.existsSync(p),
-      detail: appInstalled() ? undefined : "应用未安装，检测到 ~/.workbuddy 数据目录；配置为官方明文 JSON，写入格式待 PoC（数组/包装对象双形态，docs/tool-config-storage.md）",
     };
   },
-  configure(_o: ConfigureOptions): AdapterResult {
-    return { ok: false, supported: false, wrote: false, changes: [], skipped: "V0.2 支持：schema 双形态待实测，请先在 WorkBuddy 模型选择器「配置自定义模型」UI 手动添加" };
+  configure(o: ConfigureOptions): AdapterResult {
+    // 实机回写为裸数组（wrapDefault=false）；无数据目录时先建目录（app 未装也保留配置，与其行为一致）
+    return upsertCustomModelsEntry({
+      file: configFile(),
+      tool: ID,
+      wrapDefault: false,
+      url: o.baseUrlOpenAI + "/chat/completions",
+      options: o,
+    });
   },
-  verify(): string[] { return ["程序化写入待 PoC（V0.2）"]; },
-  restore(): void {},
+  verify(): string[] {
+    const p = configFile();
+    if (!fs.existsSync(p)) return [`${p} 不存在`];
+    try {
+      const parsed = JSON.parse(fs.readFileSync(p, "utf8"));
+      const models = Array.isArray(parsed) ? parsed : (parsed?.models ?? []);
+      const lg = models.filter((x: any) => (x.url ?? "").includes("litechipcloud.cn"));
+      if (lg.length === 0) return ["无 LiteGate 模型条目"];
+      return [];
+    } catch (e) { return [String(e)]; }
+  },
+  restore(backup: string): void {
+    fs.copyFileSync(backup, configFile());
+  },
 };

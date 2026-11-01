@@ -20,6 +20,7 @@ function configFile(): string {
 export const codexAdapter: ToolAdapter = {
   id: ID,
   name: NAME,
+  strategy: "switch",
   detect(): ToolInstallInfo {
     const p = configFile();
     return { id: ID, name: NAME, present: fs.existsSync(path.dirname(p)) || fs.existsSync(p), configPath: p, configExists: fs.existsSync(p) };

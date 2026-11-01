@@ -29,6 +29,7 @@ function appInstalled(): boolean {
 export const traeAdapter: ToolAdapter = {
   id: ID,
   name: NAME,
+  strategy: "coexist",
   detect(): ToolInstallInfo {
     const storage = storageFile();
     return {

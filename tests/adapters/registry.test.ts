@@ -13,11 +13,19 @@ import { assertValidJSON, assertValidTOML, assertValidYAML } from "../../src/cor
 import { tmpHome } from "../helpers/tmp-home.js";
 
 describe("adapter registry", () => {
-  it("注册 8 个适配器且 id 唯一", () => {
+  it("注册 13 个适配器且 id 唯一", () => {
     expect(ADAPTERS.map((a) => a.id)).toEqual([
-      "claude-code", "codex", "zcode", "minimax-code", "claude-desktop", "trae", "workbuddy", "continue",
+      "claude-code", "codex", "zcode", "minimax-code", "claude-desktop",
+      "workbuddy", "codebuddy", "crush", "opencode", "zed", "qwen-code",
+      "trae", "continue",
     ]);
     expect(new Set(ADAPTERS.map((a) => a.id)).size).toBe(ADAPTERS.length);
+  });
+
+  it("全部适配器声明写入范式（switch/coexist）", () => {
+    for (const a of ADAPTERS) {
+      expect(["switch", "coexist"]).toContain(a.strategy);
+    }
   });
 
   it("getAdapter 命中 / 未命中", () => {
