@@ -1,0 +1,74 @@
+# npm 发布：GitHub Release 发布时自动 publish 到 npmjs.com（含 provenance）
+#
+# 触发器选型：`release: published`（而非 tag push），理由：
+#   1. 只有 GitHub Release 真正发布才触发——tag push 会在任何人推任意 tag
+#      （如 v0.9-test）时误发 npm，而 release 事件是 release-please 合并
+#      Release PR 后的唯一定版信号，且 `published` 每个版本只触发一次
+#      （编辑 Release 不会重触发，天然防重复发布）。
+#   2. 触发时 tag 已存在，checkout 该 tag 即得到与 Release 完全一致的源码树。
+#   3. 已知限制：release-please 若用默认 GITHUB_TOKEN 创建 Release，本 workflow
+#      不会被触发（GitHub 平台限制，GITHUB_TOKEN 触发的事件不产生新 run）。
+#      解决：配置 RELEASE_PLEASE_TOKEN（PAT）；或用下方 workflow_dispatch 手动补救。
+#      详见 docs/RELEASE.md。
+#
+# 鉴权方式：npm Trusted Publishing（OIDC），零 token——npmjs.com 上配置
+# LiteChipCloud/litegate + workflow 文件名 npm-publish.yml 后，
+# npm(>=11.5.1) 用 OIDC 证明发布来源，无需 NPM_TOKEN secret。
+# permissions.id-token: write 是 provenance 与 OIDC 的硬性要求。
+
+name: npm publish
+
+on:
+  release:
+    types:
+      - published
+  # 手动补救入口：release-please 用 GITHUB_TOKEN 导致自动链中断时，
+  # 手填 tag（如 v0.9.5）直接发布
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的 tag（如 v0.9.5）'
+        required: true
+        type: string
+
+permissions:
+  contents: read # checkout 源码
+  id-token: write # npm provenance + OIDC trusted publishing 必需
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false # 排队发布，不互杀（避免并发 publish 冲突）
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout（对齐发布 tag）
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm # 缓存 ~/.npm，key 由 package-lock.json 派生
+          registry-url: 'https://registry.npmjs.org'
+
+      # Node 22 自带 npm 10.x，不支持 OIDC trusted publishing（最低 11.5.1），
+      # 不升级会在 publish 鉴权时报 403/404
+      - name: 升级 npm（>=11.5.1，trusted publishing 要求）
+        run: npm install -g npm@latest
+
+      - name: 安装依赖
+        run: npm ci
+
+      # tsc 产物检查先行失败；完整门禁（build+test）在下一步 publish 的
+      # prepublishOnly 钩子里还会再跑一遍（package.json: prepublishOnly）
+      - name: 构建
+        run: npm run build
+
+      # 不设 NODE_AUTH_TOKEN：npm >=11.5.1 走 OIDC trusted publishing；
+      # --provenance 生成构建来源证明（npmjs.com 徽标 + 可验证性）
+      - name: 发布到 npm
+        run: npm publish --provenance
