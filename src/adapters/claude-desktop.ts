@@ -95,7 +95,8 @@ export const claudeDesktopAdapter: ToolAdapter = {
     const out = JSON.stringify(root, null, 2) + "\n";
     assertValidJSON(out, "Claude Desktop profile");
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes: ["gateway=" + o.baseUrlAnthropic] };
-    backupFile(ID, profilePath, "upsert-gateway");
+    // 全新 profile 文件尚不存在（新建分支），此时无可备份内容——只对已有文件做备份
+    if (fs.existsSync(profilePath)) backupFile(ID, profilePath, "upsert-gateway");
     fs.writeFileSync(profilePath, out);
     fs.chmodSync(profilePath, 0o600);
     return { ok: true, supported: true, wrote: true, changes: [`inferenceGateway（${path.basename(profilePath)}，重启 Claude 生效）`] };
