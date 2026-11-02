@@ -1,0 +1,76 @@
+# demo.gif 自动重录：assets/demo.tape 或本 workflow 变更推到 main 时，
+# 用 VHS 重录 assets/demo.gif，产物与仓库现状有 diff 才自动 commit 回 main。
+#
+# 设计要点（改动前先读懂，别破坏这些前提）：
+#   1. tape 里的命令跑的是 PATH 上的 `litegate`。先 npm ci + build +
+#      `npm install -g .` 把「本次 main 的构建产物」装成全局 litegate——
+#      录的是当前代码的真实输出，不是 npm 上的已发布版本。
+#   2. charmbracelet/vhs-action 是 node20 原生 action（非 docker 容器）：
+#      它自带 ttyd + ffmpeg 安装，vhs 二进制直接跑在 runner 上，
+#      因此 tape 里的 litegate 可见。若换成 docker 方案，tape 命令会
+#      落在容器里找不到 litegate，必挂。
+#   3. demo 输出大量中文——GitHub ubuntu runner 默认没有 CJK 字体，
+#      vhs-action 自装的字体清单（JetBrains Mono 等）也不含 CJK，
+#      缺字体中文会渲染成豆腐块，所以必须先 apt 装 fonts-noto-cjk。
+#   4. tape 开头的 Hide 段自带沙箱：HOME 切到 /tmp/litegate-demo 并真实
+#      init 种入演示配置。录出的 gif 只含沙箱路径，不泄漏真实用户目录
+#      （旧版手工录制的 demo.gif 曾把 /Users/mac 全家桶路径录进去）。
+#   5. 防死循环：本 workflow 的 paths 过滤只认 demo.tape 与本文件；
+#      自动 commit 只改 assets/demo.gif，不命中过滤 → 不会自我触发。
+#      commit message 再带 [skip ci] 双保险。
+#   6. vhs 版本钉死 v0.12.1（与本地手动重录一致）。vhs 升级可能改变
+#      GIF 编码导致噪音 diff，升级前先本地 `vhs assets/demo.tape` 对比。
+
+name: demo gif
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'assets/demo.tape'
+      - '.github/workflows/demo.yml'
+  # 手动补录入口：CLI 输出有变但 tape 没改时（如适配器文案调整），
+  # Actions 页面直接跑一次即可
+  workflow_dispatch:
+
+permissions:
+  contents: write # git-auto-commit 把重录产物推回 main
+
+concurrency:
+  group: demo-gif
+  cancel-in-progress: false # 重录排队跑，避免并发 push 互相覆盖
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装 CJK 字体（中文输出缺字体会渲染成豆腐块）
+        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+
+      - name: 安装依赖并构建当前 main
+        run: npm ci && npm run build
+
+      - name: 把构建产物装成全局 litegate（tape 跑的就是它）
+        run: npm install -g .
+
+      - name: VHS 重录 assets/demo.gif
+        uses: charmbracelet/vhs-action@v2
+        with:
+          path: assets/demo.tape
+          version: v0.12.1 # 钉版本防 GIF 编码漂移；升级需本地对比后同步改动
+
+      - name: 产物有 diff 才 commit 回 main
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs(demo): CI 自动重录 demo.gif [skip ci]'
+          file_pattern: assets/demo.gif
