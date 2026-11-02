@@ -27,6 +27,7 @@
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "vitest run tests/e2e",
     "prepublishOnly": "npm run build && npm run test"
   },
   "dependencies": {
