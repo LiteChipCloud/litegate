@@ -130,6 +130,17 @@ describe("opencode", () => {
     fs.writeFileSync(opencodeFile(), "{broken");
     expect(opencodeAdapter.verify(makeOptions())[0]).toContain("无法解析");
   });
+
+  it("补官方 $schema（ruler 同款）：缺则加、用户已自定义则保留", () => {
+    opencodeAdapter.configure(makeOptions());
+    expect(readJSON(opencodeFile()).$schema).toBe("https://opencode.ai/config.json");
+
+    fs.mkdirSync(path.dirname(opencodeFile()), { recursive: true });
+    fs.writeFileSync(opencodeFile(), JSON.stringify({ $schema: "https://example.com/custom.json" }));
+    opencodeAdapter.configure(makeOptions());
+    expect(readJSON(opencodeFile()).$schema).toBe("https://example.com/custom.json");
+    expect(readJSON(opencodeFile()).provider.litegate).toBeDefined();
+  });
 });
 
 describe("zed", () => {
@@ -239,5 +250,23 @@ describe("qwen-code", () => {
     expect(qwenCodeAdapter.verify(makeOptions())).toEqual([]);
     fs.writeFileSync(qwenFile(), JSON.stringify({ env: { OPENAI_BASE_URL: "https://www.litechipcloud.cn/v1" } }));
     expect(qwenCodeAdapter.verify(makeOptions()).some((e) => e.includes("OPENAI_API_KEY 缺失"))).toBe(true);
+  });
+
+  it("内容已一致 → 跳过写入且不产生新备份（ruler 同款幂等）；有差异仍正常写入", () => {
+    qwenCodeAdapter.configure(makeOptions()); // 首次写入（新文件，本就不产生备份）
+    const before = fs.readFileSync(qwenFile(), "utf8");
+
+    const res = qwenCodeAdapter.configure(makeOptions()); // 二次：内容一致
+    expect(res.wrote).toBe(false);
+    expect(res.skipped).toContain("跳过写入");
+    expect(fs.readFileSync(qwenFile(), "utf8")).toBe(before);
+    const bak = fs.readdirSync(path.dirname(qwenFile())).filter((f) => f.includes(".bak-litegate-"));
+    expect(bak).toHaveLength(0); // 不因重复运行刷备份
+
+    // 外部改动后 replace 仍正常写入
+    fs.writeFileSync(qwenFile(), JSON.stringify({ env: {} }));
+    const res2 = qwenCodeAdapter.configure(makeOptions({ mode: "replace" }));
+    expect(res2.wrote).toBe(true);
+    expect(readJSON(qwenFile()).env.OPENAI_BASE_URL).toBe("https://www.litechipcloud.cn/v1");
   });
 });

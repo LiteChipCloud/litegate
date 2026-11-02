@@ -36,8 +36,9 @@ export const qwenCodeAdapter: ToolAdapter = {
   configure(o: ConfigureOptions): AdapterResult {
     const file = configPath();
     let root: Record<string, any> = {};
+    let original: string | null = null;
     if (fs.existsSync(file)) {
-      try { root = JSON.parse(fs.readFileSync(file, "utf8")); }
+      try { original = fs.readFileSync(file, "utf8"); root = JSON.parse(original); }
       catch { return { ok: false, supported: true, wrote: false, changes: [], error: `${file} 不是合法 JSON，拒绝修改` }; }
     }
     root.env ??= {};
@@ -63,6 +64,8 @@ export const qwenCodeAdapter: ToolAdapter = {
     const out = JSON.stringify(root, null, 2) + "\n";
     assertValidJSON(out, "Qwen Code settings");
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes };
+    // 内容已一致则跳过写入（ruler 同款幂等）：不重写文件、不产生新备份/manifest 条目
+    if (original === out) return { ok: true, supported: true, wrote: false, changes, skipped: "配置已与目标一致，跳过写入" };
     if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
     else backupFile(ID, file, "merge-env");
     writeFileSyncAtomic(file, out);

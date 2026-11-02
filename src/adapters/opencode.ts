@@ -82,6 +82,9 @@ export const opencodeAdapter: ToolAdapter = {
       if (!read.strict) return { ok: false, supported: true, wrote: false, changes: [], error: `${file} ${JSONC_WRITE_REFUSE}` };
       root = read.root;
     }
+    // $schema 缺失则补官方 schema（ruler 同款做法）：编辑器可获得补全/校验；用户已自定义则保留
+    const addSchema = !root.$schema;
+    if (addSchema) root = { $schema: "https://opencode.ai/config.json", ...root };
     root.provider ??= {};
     const models: Record<string, unknown> = {};
     for (const m of o.chatModels) {
@@ -96,6 +99,7 @@ export const opencodeAdapter: ToolAdapter = {
     const out = JSON.stringify(root, null, 2) + "\n";
     assertValidJSON(out, "OpenCode config");
     const changes = [`provider.litegate（模型×${o.chatModels.length}）`];
+    if (addSchema) changes.push("$schema=opencode.ai/config.json（编辑器补全/校验）");
     if (o.dryRun) return { ok: true, supported: true, wrote: false, changes };
     if (!fs.existsSync(file)) fs.mkdirSync(path.dirname(file), { recursive: true });
     else backupFile(ID, file, "upsert-provider");
