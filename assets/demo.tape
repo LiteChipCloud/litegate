@@ -37,8 +37,8 @@ Type "litegate models"
 Enter
 Sleep 3.5s
 
-# 已接入状态下重跑 init：claude-code 适配器可优雅增量（仅同步 modelPicker），
-# 不会像旧脚本录 codex 那样以 TOML 重复键报错收尾。
+# 已接入状态下重跑 init：适配器均可优雅增量（codex 标记段幂等、claude-code 仅同步 modelPicker）。
+# 历史注：npm 旧版（≤0.6.x）codex 重跑曾以 TOML 重复键报错收尾，现已有 E2E 用例锁住该语义。
 Type "clear" Enter
 Type "litegate init --key sk-lcc-demo0000000000000000000000 --tools claude-code --dry-run --yes"
 Enter

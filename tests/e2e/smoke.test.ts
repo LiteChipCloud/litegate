@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import TOML from "@iarna/toml";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   DIST_INDEX,
@@ -145,5 +146,22 @@ describe("LiteGate CLI E2E 冒烟（真实进程 dist/index.js）", () => {
       expect(toml).toContain('wire_api = "responses"');
       expect(fs.existsSync(path.join(home, ".codex", "litegate-model-catalog.json"))).toBe(true);
     }, 90_000);
+
+    it("🔒 codex 幂等：已接入后重复 init（含 dry-run）均 exit 0，托管段恰 1 个不重复", () => {
+      const home = makeTmpHome();
+      fs.mkdirSync(path.join(home, ".codex"), { recursive: true });
+      const args = ["init", "--key", "sk-lcc-e2e-test", "--tools", "codex"];
+      // 旧版（≤0.6.x npm 包）此处会报 TOML「Can't redefine existing key」——
+      // 当前标记段幂等设计必须保持；此用例把该语义锁在真实进程层
+      for (const extra of [["--yes"], ["--dry-run", "--yes"], ["--yes"]]) {
+        const r = runCli([...args, ...extra], { home });
+        expect(r.timedOut).toBe(false);
+        expect(r.status, `args=${extra.join(" ")} stdout=${r.stdout} stderr=${r.stderr}`).toBe(0);
+      }
+      const toml = fs.readFileSync(path.join(home, ".codex", "config.toml"), "utf8");
+      expect(toml.split("# >>> LiteGate begin")).toHaveLength(2); // 恰 1 个标记段
+      TOML.parse(toml); // 合法 TOML（旧版 bug 即此处抛重复键）
+      expect((TOML.parse(toml) as any).model_provider).toBe("litegate");
+    }, 120_000);
   });
 });
