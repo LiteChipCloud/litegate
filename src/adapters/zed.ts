@@ -29,8 +29,24 @@ const JSONC_WRITE_REFUSE = `文件含注释/非标准 JSON，为保住您的注�
  * settings.json 是 Zed 主配置且允许 JSONC 注释：**读取宽容**（jsonc-parser 容忍注释/尾逗号，
  * verify 不再误报），**写入保守**（非标准 JSON 一律拒绝改写，绝不 stringify 抹掉用户注释）。
  */
+/**
+ * 平台相关配置路径（纯函数，供 detect/TOOLS 与测试复用）：
+ *   darwin/linux → ~/.config/zed/settings.json（同为 XDG，合并分支；darwin 现状保留）
+ *   win32 → %APPDATA%\Zed\settings.json
+ *     官方证据：zed.dev/docs/git——全局 AGENTS.md「~/.config/zed/AGENTS.md on macOS and
+ *     Linux, %APPDATA%\Zed\AGENTS.md on Windows」；zed.dev/docs/debugger——debug.json 与
+ *     用户 settings.json 同目录，Windows 为 %APPDATA%\Zed\debug.json（%APPDATA%=Roaming）。
+ * Windows 布局按默认用户目录拼装（C:\Users\<user>\AppData\Roaming），不读 env，保证纯函数可测。
+ */
+export function configPathFor(platform: NodeJS.Platform): string {
+  const h = homedir();
+  if (platform === "win32") return path.join(h, "AppData", "Roaming", "Zed", "settings.json");
+  // darwin / linux（XDG Base Directory，默认 ~/.config/zed）
+  return path.join(h, ".config", "zed", "settings.json");
+}
+
 function configPath(): string {
-  return path.join(homedir(), ".config", "zed", "settings.json");
+  return configPathFor(process.platform);
 }
 
 /**

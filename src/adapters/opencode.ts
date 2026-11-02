@@ -25,9 +25,20 @@ const JSONC_WRITE_REFUSE = `文件含注释/非标准 JSON，为保住您的注�
  * 读取宽容：jsonc-parser 容忍注释/尾逗号，verify 不再误报；写入保守：非标准 JSON 仍拒绝改写，
  * 绝不 stringify 抹掉用户注释。
  */
-function configPaths(): string[] {
+/**
+ * 平台相关配置路径（纯函数，供 detect/TOOLS 与测试复用）：
+ * 三平台同构 → <home>/.config/opencode/opencode.json(.jsonc)。
+ * 官方证据：opencode.ai/docs/config——全局配置 ~/.config/opencode/opencode.json；
+ * opencode.ai/docs/troubleshooting——Windows 原文「Press WIN+R and paste
+ * %USERPROFILE%\.config\opencode\opencode.jsonc」，即 Windows 也在用户目录 .config 下。
+ */
+export function configPathsFor(_platform: NodeJS.Platform): string[] {
   const dir = path.join(homedir(), ".config", "opencode");
   return [path.join(dir, "opencode.json"), path.join(dir, "opencode.jsonc")];
+}
+
+function configPaths(): string[] {
+  return configPathsFor(process.platform);
 }
 
 /**

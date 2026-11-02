@@ -3,6 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import type { ToolInstallInfo } from "../types.js";
+import { zedAdapter } from "../adapters/zed.js";
+import { crushAdapter } from "../adapters/crush.js";
+import { opencodeAdapter } from "../adapters/opencode.js";
+import { claudeDesktopAdapter } from "../adapters/claude-desktop.js";
 
 function home(...p: string[]): string {
   return path.join(os.homedir(), ...p);
@@ -60,7 +64,7 @@ export const TOOLS: ToolSpec[] = [
     id: "trae",
     name: "Trae",
     detect: () => {
-      const base = process.env.HOME?.startsWith("/Users") ? home("Library", "Application Support", "Trae") : home(".config", "Trae");
+      const base = process.platform === "darwin" ? home("Library", "Application Support", "Trae") : home(".config", "Trae");
       return { id: "trae", name: "Trae", present: exists(base), configPath: base, configExists: exists(base) };
     },
   },
@@ -68,7 +72,7 @@ export const TOOLS: ToolSpec[] = [
     id: "cursor",
     name: "Cursor（需 Pro 订阅）",
     detect: () => {
-      const base = process.env.HOME?.startsWith("/Users") ? home("Library", "Application Support", "Cursor") : home(".cursor");
+      const base = process.platform === "darwin" ? home("Library", "Application Support", "Cursor") : home(".cursor");
       const configPath = home(".cursor", "mcp.json");
       return { id: "cursor", name: "Cursor", present: exists(base) || exists(home(".cursor")), configPath, configExists: exists(configPath), detail: "自定义 API Key 需 Cursor Pro 订阅，免费版及 Tab 补全不支持" };
     },
@@ -80,5 +84,26 @@ export const TOOLS: ToolSpec[] = [
       const base = home(".workbuddy");
       return { id: "workbuddy", name: "WorkBuddy", present: exists(base), configPath: base, configExists: exists(base) };
     },
+  },
+  // ── 平台相关路径的工具：detect 直接复用适配器实现（路径走同一 configPathFor 平台函数）──
+  {
+    id: "zed",
+    name: "Zed",
+    detect: () => zedAdapter.detect(),
+  },
+  {
+    id: "crush",
+    name: "Crush",
+    detect: () => crushAdapter.detect(),
+  },
+  {
+    id: "opencode",
+    name: "OpenCode",
+    detect: () => opencodeAdapter.detect(),
+  },
+  {
+    id: "claude-desktop",
+    name: "Claude Desktop",
+    detect: () => claudeDesktopAdapter.detect(),
   },
 ];

@@ -20,8 +20,20 @@ const NAME = "Crush";
  * 模型列表不手写——crush 对 openai-compat 类型 models 为空时自动 GET /v1/models 发现
  * （官方文档：docs/config/README.md），LiteGate 网关即 OpenAI 兼容。
  */
-function configFile(): string {
+/**
+ * 平台相关配置路径（纯函数，供 detect/TOOLS 与测试复用）：
+ * 三平台同构 → <home>/.config/crush/crush.json（legacy JSON 与 crushrc 同目录）。
+ * 官方证据（github.com/charmbracelet/crush）：README「%USERPROFILE%\.config\crush\crushrc
+ * on Windows」；internal/config/load.go GlobalConfig() = XDG config home/crush/crush.json。
+ * 注意：Windows 的 %LOCALAPPDATA%\crush 只是机器态数据目录（providers.json 等 state），
+ * Crush 明确不从那里读配置——别混淆。
+ */
+export function configPathFor(_platform: NodeJS.Platform): string {
   return path.join(homedir(), ".config", "crush", "crush.json");
+}
+
+function configFile(): string {
+  return configPathFor(process.platform);
 }
 
 export const crushAdapter: ToolAdapter = {

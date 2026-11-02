@@ -21,6 +21,23 @@ const NAME = "Claude Desktop";
  *   当前 profile 由 _meta.json 的 appliedId 指定。
  * 数据目录名可能是 Claude-3p（3p 部署）或 Claude，两者都探测。
  */
+/**
+ * 平台相关配置路径（纯函数，供 detect/TOOLS 与测试复用）：
+ *   darwin → ~/Library/Application Support/Claude-3p/configLibrary（现状保留）
+ *   win32 → %APPDATA%\Claude（官方 MCP 文档 modelcontextprotocol.io：Windows 下
+ *     claude_desktop_config.json 位于 %APPDATA%\Claude，%APPDATA%=Roaming）。
+ *     ⚠️ 该目录只是数据目录证据：configLibrary 推理 profile 结构是 macOS 3p 部署特性，
+ *     Windows 是否存在未证实（且新版 Windows 安装形态多样，配置读取位置可能随安装方式漂移）
+ *     → Windows 只做安装探测（detect），configure 明确 skipped，不瞎写。
+ *   linux/其他 → ""（官方无 Linux 版 Claude Desktop，查无可靠路径 → 返回未知路径而非猜）
+ */
+export function configPathFor(platform: NodeJS.Platform): string {
+  const h = homedir();
+  if (platform === "darwin") return path.join(h, "Library", "Application Support", "Claude-3p", "configLibrary");
+  if (platform === "win32") return path.join(h, "AppData", "Roaming", "Claude");
+  return "";
+}
+
 function dataDir(): string | null {
   for (const name of ["Claude-3p", "Claude"]) {
     const d = path.join(homedir(), "Library", "Application Support", name);
@@ -49,18 +66,58 @@ export const claudeDesktopAdapter: ToolAdapter = {
   name: NAME,
   strategy: "switch",
   detect(): ToolInstallInfo {
-    const dir = dataDir();
-    const p = dir ? profileFile(dir) : null;
+    if (process.platform === "darwin") {
+      const dir = dataDir();
+      const p = dir ? profileFile(dir) : null;
+      return {
+        id: ID,
+        name: NAME,
+        present: !!dir,
+        configPath: p ?? configPathFor("darwin"),
+        configExists: !!p,
+        detail: dir ? undefined : "未检测到 Claude Desktop 数据目录（需支持 third-party inference 的版本）",
+      };
+    }
+    if (process.platform === "win32") {
+      const dir = configPathFor("win32");
+      return {
+        id: ID,
+        name: NAME,
+        present: fs.existsSync(dir),
+        configPath: dir,
+        // configLibrary 推理 profile 在 Windows 未证实 → 不标记已配置
+        configExists: false,
+        detail: "Windows 暂不支持自动接入：官方仅证实数据目录 %APPDATA%\\Claude（claude_desktop_config.json 属 MCP 配置）；configLibrary 推理 profile 是 macOS 3p 特性，Windows 结构未证实",
+      };
+    }
     return {
       id: ID,
       name: NAME,
-      present: !!dir,
-      configPath: p ?? path.join(homedir(), "Library", "Application Support", "Claude-3p", "configLibrary"),
-      configExists: !!p,
-      detail: dir ? undefined : "未检测到 Claude Desktop 数据目录（需支持 third-party inference 的版本）",
+      present: false,
+      configPath: configPathFor(process.platform),
+      configExists: false,
+      detail: `暂不支持 ${process.platform}：官方无该平台版本，配置路径未证实`,
     };
   },
   configure(o: ConfigureOptions): AdapterResult {
+    if (process.platform === "win32") {
+      return {
+        ok: false,
+        supported: true,
+        wrote: false,
+        changes: [],
+        skipped: "暂不支持 Windows 自动接入：官方仅证实数据目录 %APPDATA%\\Claude（claude_desktop_config.json 属 MCP 配置）；configLibrary 推理 profile 是 macOS 3p 部署特性，Windows 结构未证实，请手动配置",
+      };
+    }
+    if (process.platform !== "darwin") {
+      return {
+        ok: false,
+        supported: true,
+        wrote: false,
+        changes: [],
+        skipped: `暂不支持 ${process.platform} 自动接入：官方无该平台的 Claude Desktop（配置路径未证实），请手动配置`,
+      };
+    }
     if (appRunning()) {
       return { ok: false, supported: true, wrote: false, changes: [], skipped: "Claude 正在运行，请先退出 Claude 再执行（防止内存覆盖配置）" };
     }
@@ -108,6 +165,8 @@ export const claudeDesktopAdapter: ToolAdapter = {
     return { ok: true, supported: true, wrote: true, changes: [`inferenceGateway（${path.basename(profilePath)}，重启 Claude 生效）`] };
   },
   verify(): string[] {
+    if (process.platform === "win32") return ["暂不支持 Windows 自动接入（configLibrary 推理 profile 结构未证实），请手动配置"];
+    if (process.platform !== "darwin") return [`暂不支持 ${process.platform}（官方无该平台的 Claude Desktop）`];
     const dir = dataDir();
     if (!dir) return [`${NAME} 数据目录不存在`];
     const p = profileFile(dir);
