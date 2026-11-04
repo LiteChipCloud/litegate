@@ -119,6 +119,7 @@ wire_api = "chat"
 | OpenCode | ✅ 支持 | 追加 provider 共存 |
 | Zed | ✅ 支持 | 追加 provider 共存（key 走 `LITEGATE_API_KEY` 环境变量） |
 | Qwen Code | ✅ 支持 | 切换默认（settings.json env 段） |
+| Goose | ✅ 支持 | 追加 provider 共存（模型清单文件 + key 走 `LITEGATE_API_KEY` 环境变量） |
 | Trae | 🔄 V0.2 适配中 | Key 经 safeStorage 加密，程序化写入待 PoC |
 | Cursor | ⚠️ 受限 | 自定义 API Key 需 Cursor Pro 订阅，暂不自动配置 |
 

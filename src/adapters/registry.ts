@@ -12,6 +12,7 @@ import { crushAdapter } from "./crush.js";
 import { opencodeAdapter } from "./opencode.js";
 import { zedAdapter } from "./zed.js";
 import { qwenCodeAdapter } from "./qwen-code.js";
+import { gooseAdapter } from "./goose.js";
 
 export const ADAPTERS: ToolAdapter[] = [
   claudeCodeAdapter,
@@ -25,6 +26,7 @@ export const ADAPTERS: ToolAdapter[] = [
   opencodeAdapter,
   zedAdapter,
   qwenCodeAdapter,
+  gooseAdapter,
   traeAdapter,
   continueAdapter,
 ];

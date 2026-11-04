@@ -13,11 +13,11 @@ import { assertValidJSON, assertValidTOML, assertValidYAML } from "../../src/cor
 import { tmpHome } from "../helpers/tmp-home.js";
 
 describe("adapter registry", () => {
-  it("注册 13 个适配器且 id 唯一", () => {
+  it("注册 14 个适配器且 id 唯一", () => {
     expect(ADAPTERS.map((a) => a.id)).toEqual([
       "claude-code", "codex", "zcode", "minimax-code", "claude-desktop",
       "workbuddy", "codebuddy", "crush", "opencode", "zed", "qwen-code",
-      "trae", "continue",
+      "goose", "trae", "continue",
     ]);
     expect(new Set(ADAPTERS.map((a) => a.id)).size).toBe(ADAPTERS.length);
   });
