@@ -167,5 +167,49 @@ describe("LiteGate CLI E2E 冒烟（真实进程 dist/index.js）", () => {
       TOML.parse(toml); // 合法 TOML（旧版 bug 即此处抛重复键）
       expect((TOML.parse(toml) as any).model_provider).toBe("litegate");
     }, 120_000);
+
+    /**
+     * 全适配器覆盖：对每一款「支持写入」的工具跑真实 init，断言配置落盘且含
+     * LiteGate 标识。detect 预置目录与落盘断言路径**按平台硬拼**（不能 import
+     * src 的 configPathFor——E2E 无 homedir mock，它返回真实 HOME 而非 tmp）。
+     * trae（supported:false）与 cursor（不在 registry）不在表内。
+     */
+    const targets: { id: string; detectDir: string; file: string; marker: string; darwinOnly?: boolean }[] = [
+      { id: "zcode", detectDir: path.join(".zcode"), file: path.join(".zcode", "v2", "provider_config.json"), marker: "LiteGate" },
+      { id: "minimax-code", detectDir: path.join(".minimax"), file: path.join(".minimax", "config.yaml"), marker: "litegate" },
+      { id: "workbuddy", detectDir: path.join(".workbuddy"), file: path.join(".workbuddy", "models.json"), marker: "litechipcloud" },
+      { id: "codebuddy", detectDir: path.join(".codebuddy"), file: path.join(".codebuddy", "models.json"), marker: "litechipcloud" },
+      { id: "crush", detectDir: path.join(".config", "crush"), file: path.join(".config", "crush", "crush.json"), marker: "litegate" },
+      { id: "opencode", detectDir: path.join(".config", "opencode"), file: path.join(".config", "opencode", "opencode.json"), marker: "litegate" },
+      { id: "qwen-code", detectDir: path.join(".qwen"), file: path.join(".qwen", "settings.json"), marker: "litechipcloud" },
+      process.platform === "win32"
+        ? { id: "zed", detectDir: path.join("AppData", "Roaming", "Zed"), file: path.join("AppData", "Roaming", "Zed", "settings.json"), marker: "litegate" }
+        : { id: "zed", detectDir: path.join(".config", "zed"), file: path.join(".config", "zed", "settings.json"), marker: "litegate" },
+      process.platform === "win32"
+        ? { id: "goose", detectDir: path.join("AppData", "Roaming", "Block", "goose", "config"), file: path.join("AppData", "Roaming", "Block", "goose", "config", "custom_providers", "litegate.json"), marker: "litegate" }
+        : { id: "goose", detectDir: path.join(".config", "goose"), file: path.join(".config", "goose", "custom_providers", "litegate.json"), marker: "litegate" },
+      // claude-desktop：写入语义 macOS 专属（win32/linux 适配器明确 skipped）
+      { id: "claude-desktop", detectDir: path.join("Library", "Application Support", "Claude-3p", "configLibrary"), file: path.join("Library", "Application Support", "Claude-3p", "configLibrary"), marker: "litechipcloud", darwinOnly: true },
+    ];
+
+    for (const t of targets.filter((x) => !x.darwinOnly || process.platform === "darwin")) {
+      it(`init ${t.id}：配置落盘且含 LiteGate 标识`, () => {
+        const home = makeTmpHome();
+        fs.mkdirSync(path.join(home, t.detectDir), { recursive: true });
+        const r = runCli(["init", "--key", "sk-lcc-e2e-test", "--tools", t.id, "--yes"], { home });
+        expect(r.timedOut).toBe(false);
+        expect(r.status, `stdout=${r.stdout} stderr=${r.stderr}`).toBe(0);
+
+        if (t.id === "claude-desktop") {
+          // profile 文件名含动态 id：断言 configLibrary 下有非 _meta 的 json 且内容含标识
+          const lib = path.join(home, t.file);
+          const profile = fs.readdirSync(lib).find((f) => f.endsWith(".json") && f !== "_meta.json");
+          expect(profile, `configLibrary 下应有 profile json：${fs.readdirSync(lib)}`).toBeTruthy();
+          expect(fs.readFileSync(path.join(lib, profile!), "utf8")).toContain(t.marker);
+        } else {
+          expect(fs.readFileSync(path.join(home, t.file), "utf8")).toContain(t.marker);
+        }
+      }, 90_000);
+    }
   });
 });
