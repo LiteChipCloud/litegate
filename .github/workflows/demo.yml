@@ -58,8 +58,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
 
       - name: 安装依赖并构建当前 main
-        # package-lock 的 resolved 是内网 Nexus（公司基建），runner 解析不了 → CI 用官方源
-        run: npm config set registry https://registry.npmjs.org/ && npm ci && npm run build
+        # lock 的 resolved 是内网 Nexus，runner 解析不了——先重写 host（见 test.yml 注释）
+        run: node -e 'const fs=require("fs");const p="package-lock.json";fs.writeFileSync(p,fs.readFileSync(p,"utf8").split("http://gitlab.lcc.local:8081/repository/lcc-npm-public").join("https://registry.npmjs.org"))' && npm ci && npm run build
 
       - name: 把构建产物装成全局 litegate（tape 跑的就是它）
         run: npm install -g .
