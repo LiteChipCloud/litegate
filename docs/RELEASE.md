@@ -1,27 +1,23 @@
-# 发版指南（release-please + npm Trusted Publishing）
+# 发版指南（手动发布 + npm Trusted Publishing）
 
-> 本仓库 `@litechipcloud/litegate` 的自动化发版链路。
-> CI 骨架由两个 workflow 组成，**本仓库零 classic token 依赖**——npm 发布走
-> OIDC Trusted Publishing，不需要在任何地方保存 npm token。
+> 本仓库 `@litechipcloud/litegate` 的发版指南。
+> **2026-11-05 邓总拍板：不做自动发布，改为手动触发**（release-please 自动链
+> 已拆除；Release PR #1 已关闭未合并）。发布走 GitHub Actions 手动触发 +
+> OIDC Trusted Publishing，零 classic token 依赖。
 
 ## 一、链路总览
 
 ```
-conventional commits 推到 main
+本地：改 package.json version + CHANGELOG（手动维护）
         │
         ▼
-.github/workflows/release-please.yml（googleapis/release-please-action@v4）
-        │  自动开/更新 Release PR："chore(main): release X.Y.Z"
-        │  （bump package.json + package-lock.json + CHANGELOG.md）
-        ▼
-邓总审核并合并 Release PR
+git tag vX.Y.Z && git push origin vX.Y.Z
         │
         ▼
-release-please 创建 GitHub Release + tag vX.Y.Z，写回 .release-please-manifest.json
-        │
-        ▼  （release: published 事件触发）
+GitHub → Actions → 「npm publish」→ Run workflow → 填 tag
+        │  （workflow_dispatch 手动触发，唯一入口）
 .github/workflows/npm-publish.yml
-        │  checkout tag → Node 22 → npm ci → npm run build
+        │  checkout tag → Node 22 → 重写 lock registry → npm ci → npm run build
         │  → npm publish --provenance（prepublishOnly 钩子再次 build + test）
         ▼
 npmjs.com 上线，带构建 provenance 徽标
@@ -29,22 +25,18 @@ npmjs.com 上线，带构建 provenance 徽标
 
 ## 二、日常发版流程
 
-1. **正常提交**：commit message 走 conventional commits
-   （`feat: …` / `fix: …` / `chore(deps): …`）。版本号由 release-please 依据
-   commit 类型自动推导（feat → minor，fix/perf → patch，带 `!` 或
-   `BREAKING CHANGE:` → major）。
-2. **等 Release PR**：push main 后，release-please 自动开/更新
-   `chore(main): release X.Y.Z` PR，内含版本号、`CHANGELOG.md` 与
-   `package.json`/`package-lock.json` 的 bump。
-3. **合并 Release PR**（需要决策权的审合人确认，勿 self-merge）。
-4. **自动完成**：GitHub Release + tag `vX.Y.Z` 创建 → `npm-publish.yml` 自动
-   跑构建、测试、发布。
-5. **验证**：到 <https://www.npmjs.com/package/@litechipcloud/litegate> 确认新
-   版本已发布且带 provenance 标识；Release 页有自动生成的 changelog。
+1. **改版本号**：手动改 `package.json` 的 `version`（+ 同步 CHANGELOG，
+   如有）并 commit 推 main。
+2. **打 tag**：`git tag v0.10.0 && git push origin v0.10.0`（与 package.json
+   版本一致）。
+3. **手动触发发布**：GitHub 仓库 → Actions → **npm publish** → Run workflow
+   → 填入 tag（如 `v0.10.0`）→ 确认。
+4. **验证**：到 <https://www.npmjs.com/package/@litechipcloud/litegate> 确认新
+   版本已发布且带 provenance 标识。
 
-> 测试说明：当前没有独立的 test job（第二批再加），测试在 publish 的
-> `prepublishOnly` 钩子（`npm run build && npm run test`）里执行——发布即测试，
-> 测试不过发布自动中止。
+> 测试门禁：发布前 `prepublishOnly` 钩子（`npm run build && npm run test`）
+> 必过——测试不过发布自动中止。另有 `test.yml` 三平台矩阵（ubuntu/macos/
+> windows）在每次 push 时独立跑全量单测 + E2E。
 
 ## 三、一次性人工配置清单（首次接入必做）
 
@@ -64,17 +56,10 @@ npmjs.com 上线，带构建 provenance 徽标
 配置后，CI 发布用 GitHub OIDC 证明"这个包确实来自这个仓库的这个 workflow"，
 无需任何 npm token。
 
-### 3.2 GitHub 仓库：配置 RELEASE_PLEASE_TOKEN（打通全自动链条）
+### 3.2 GitHub 仓库：RELEASE_PLEASE_TOKEN（已随自动链拆除，可删可留）
 
-- **为什么需要**：GitHub 平台限制——用默认 `GITHUB_TOKEN` 创建的
-  Release/PR/tag **不会触发其他 workflow**（release-please-action 官方 README
-  明确说明）。不配 PAT，Release PR 与 GitHub Release 照常创建，但
-  `npm-publish.yml` 不会被自动触发。
-- **怎么做**：建一个 PAT（classic 或 fine-grained 均可；fine-grained 需授予
-  本仓库 Contents: Read/Write + Workflows: Read/Write），存为仓库 secret
-  **`RELEASE_PLEASE_TOKEN`**。`release-please.yml` 已写成
-  `secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN` 的回退形式——
-  不配也不报错，只是自动化链条断一环。
+release-please 自动链已拆除，secret `RELEASE_PLEASE_TOKEN` 已无消费者，
+留着无害、删除亦可（仓库 Settings → Secrets and variables → Actions）。
 
 ### 3.3 不需要做的
 
@@ -98,15 +83,13 @@ npm 官方对 **classic token** 的退役计划：
 
 | 症状 | 原因 | 处置 |
 | --- | --- | --- |
-| 合了 Release PR，GitHub Release 创建了，但 npm-publish 没跑 | `RELEASE_PLEASE_TOKEN` 未配置（GITHUB_TOKEN 限制） | 配 secret（§3.2）；或 Actions 页手动跑 `npm publish` workflow，输入 tag（如 `v0.9.5`）补救 |
+| 手动跑 workflow 报 tag 不存在 | 输入的 tag 未推送远程 | 先 `git push origin vX.Y.Z`，再跑 workflow |
 | npm publish 报 403 / 404 | Trusted Publisher 配置不匹配（workflow 文件名、仓库、environment 不一致）；或 CI 里 npm < 11.5.1 | 核对 §3.1；workflow 已强制 `npm install -g npm@latest`（Node 22 自带 npm 10.x 不支持 OIDC，最低要求 11.5.1） |
 | 包发布了但没有 provenance 徽标 | workflow 缺 `permissions: id-token: write`，或发布未带 `--provenance` | 已内置于 `npm-publish.yml`，勿删 |
-| Release PR 长期不开 | main 上没有符合 conventional commits 的提交；或 manifest 版本与 package.json 不同步 | 检查 commit message；核对 `.release-please-manifest.json` 与 `package.json` 的 version 是否一致（两者都应为当前最新版） |
+| npm ci 拉到内网 Nexus 报 ENOTFOUND/EAI_AGAIN | lock 重写步骤被改动/删除 | 恢复「重写 lockfile 为官方 registry」步骤（git 历史可见） |
 
 ## 六、待人工核对清单
 
-- [ ] release-please-action v4 的 inputs（`token` / `config-file` /
-      `manifest-file`）按官方 README v4 写法配置，升级到 v5 时需重核。
 - [ ] npm Trusted Publishing 最低 npm 版本 11.5.1（Node 22 需手动升级 npm）。
 - [ ] classic token 停发（2025-11）与全失效（2027-01）的准确日期。
 - [ ] 若 npm 侧 Trusted Publisher 配置了 environment，须回填
