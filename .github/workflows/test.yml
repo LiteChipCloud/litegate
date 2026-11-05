@@ -27,6 +27,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # package-lock 的 resolved 是内网 Nexus（公司基建），runner 解析不了 → CI 用官方源
+      - run: npm config set registry https://registry.npmjs.org/
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npm test
