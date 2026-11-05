@@ -8,6 +8,9 @@ vi.mock("node:os", async (importOriginal) => {
   return { ...fake, default: fake };
 });
 
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { ADAPTERS, getAdapter } from "../../src/adapters/registry.js";
 import { assertValidJSON, assertValidTOML, assertValidYAML } from "../../src/core/validate.js";
 import { tmpHome } from "../helpers/tmp-home.js";
@@ -49,8 +52,15 @@ describe("validate", () => {
 });
 
 describe("守卫：临时 HOME 全程生效", () => {
-  it("homedir 指向 /tmp 下（绝不允许指向真实用户目录）", () => {
-    expect(tmpHome().startsWith("/tmp/") || tmpHome().startsWith("/private/tmp/")).toBe(true);
-    expect(tmpHome()).not.toContain("/Users/");
+  it("homedir 指向系统临时目录下（绝不允许指向真实用户目录）", () => {
+    // 跨平台：mac 的 tmpdir 在 /var/folders、Windows 在 %TEMP%（含 Users 但不是真实 HOME）。
+    // 两边都 realpath：mac 上 /tmp 是 /private/tmp 的软链，字符串前缀必须对称
+    const tmpBase = fs.realpathSync(os.tmpdir());
+    expect(tmpHome().startsWith(tmpBase)).toBe(true);
+    // 真实 HOME 取进程环境（os.homedir 已被本文件 mock，不能用）
+    const realHome = process.env.HOME ?? process.env.USERPROFILE ?? "";
+    expect(realHome).toBeTruthy();
+    expect(tmpHome()).not.toBe(realHome);
+    expect(path.relative(tmpBase, tmpHome()).startsWith("..")).toBe(false);
   });
 });

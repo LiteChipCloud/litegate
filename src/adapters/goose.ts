@@ -76,7 +76,12 @@ function gooseConfigDir(): string {
 /** 与 src/core/detect.ts 同款 cmdExists 模式（本机无 goose 命令时返回 false，走纯文件分支） */
 function cmdExists(cmd: string): boolean {
   try {
-    execSync(`command -v ${cmd}`, { shell: "/bin/zsh", stdio: "ignore" });
+    if (process.platform === "win32") {
+      // Windows：cmd.exe 无 POSIX command -v，用 where
+      execSync(`where ${cmd}`, { stdio: "ignore" });
+    } else {
+      execSync(`command -v ${cmd}`, { shell: "/bin/zsh", stdio: "ignore" });
+    }
     return true;
   } catch {
     return false;

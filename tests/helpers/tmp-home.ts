@@ -21,10 +21,19 @@ import path from "node:path";
 
 const state = { home: "" };
 
+/**
+ * 系统临时目录：走 process.env 而非 os.tmpdir()——本文件被 vi.mock("node:os") 的
+ * 工厂内部 import，此处再 import node:os 会形成循环依赖死锁（工厂等本模块、
+ * 本模块的 os 等工厂）。env 链跨平台：mac=TMPDIR、Windows=TEMP/TMP。
+ */
+function systemTmp(): string {
+  return process.env.TMPDIR ?? process.env.TEMP ?? process.env.TMP ?? "/tmp";
+}
+
 /** 首次调用创建临时 HOME，之后返回同一个（每个测试文件一个） */
 export function ensureTmpHome(): string {
   if (!state.home) {
-    state.home = fs.mkdtempSync(path.join(fs.realpathSync("/tmp"), "litegate-test-home-"));
+    state.home = fs.mkdtempSync(path.join(fs.realpathSync(systemTmp()), "litegate-test-home-"));
   }
   return state.home;
 }

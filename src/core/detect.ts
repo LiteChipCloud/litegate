@@ -16,7 +16,12 @@ function exists(p: string): boolean {
 }
 function cmdExists(cmd: string): boolean {
   try {
-    execSync(`command -v ${cmd}`, { shell: "/bin/zsh", stdio: "ignore" });
+    if (process.platform === "win32") {
+      // Windows：cmd.exe 无 POSIX command -v，用 where；不传 shell 用系统默认
+      execSync(`where ${cmd}`, { stdio: "ignore" });
+    } else {
+      execSync(`command -v ${cmd}`, { shell: "/bin/zsh", stdio: "ignore" });
+    }
     return true;
   } catch { return false; }
 }
