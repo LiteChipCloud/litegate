@@ -38,7 +38,11 @@ const gatewayOnline = await checkGatewayOnline();
 describe("LiteGate CLI E2E 冒烟（真实进程 dist/index.js）", () => {
   beforeAll(() => {
     // 按设计用 npx tsc 构建产物（dist/ 在 .gitignore）；编译失败则整组直接报错
-    execFileSync("npx", ["tsc"], { cwd: REPO_ROOT, encoding: "utf8", timeout: 120_000 });
+    // 不走 npx：Windows 上 npx 是 npx.cmd，spawnSync 无 shell 时 ENOENT；
+    // 直接 node 调本地 tsc 入口，三平台一致
+    execFileSync(process.execPath, ["node_modules/typescript/bin/tsc"], {
+      cwd: REPO_ROOT, encoding: "utf8", timeout: 120_000,
+    });
     expect(fs.existsSync(DIST_INDEX), "tsc 构建后 dist/index.js 应存在").toBe(true);
   }, 150_000);
 

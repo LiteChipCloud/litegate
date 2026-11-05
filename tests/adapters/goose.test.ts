@@ -191,8 +191,10 @@ describe("goose detect（纯文件分支——本机无 goose 命令也能走通
     expect(gooseAdapter.detect().configExists).toBe(true);
   });
 
-  it("~/.config/goose 根目录存在 → present（装了 goose 但还没建过 provider）", () => {
-    fs.mkdirSync(path.join(tmpHome(), ".config", "goose"), { recursive: true });
+  it("goose 配置根目录存在 → present（装了 goose 但还没建过 provider）", () => {
+    // 布局随平台（win32 = %APPDATA%\Block\goose\config）：走 configPathFor 派生，别硬编码 unix 路径
+    const configDir = path.dirname(path.dirname(configPathFor(process.platform)));
+    fs.mkdirSync(configDir, { recursive: true });
     expect(gooseAdapter.detect().present).toBe(true);
     expect(gooseAdapter.detect().detail).toContain("LITEGATE_API_KEY");
   });
