@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # 运行时依赖仅 6 个且手工把关（@iarna/toml 已停更等已知项见 docs），
+    # PR 提醒但不高频打扰：限定开放 PR 数
+    open-pull-requests-limit: 3
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3

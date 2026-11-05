@@ -126,6 +126,8 @@ wire_api = "chat"
 > CLI 只配置**你本机已安装**的工具——支持矩阵是兼容性清单，不是安装清单。
 > 「追加共存」不改动工具里已有的其他供应商配置；「切换默认」只改默认端点/模型相关字段，
 > 两者都自动备份、可 `litegate rollback` 一键回滚。
+> **平台支持**：macOS / Linux / Windows 全量测试（三平台 CI 矩阵真机验证）；
+> Claude Desktop 的写入仅 macOS（Windows 结构官方未证实，明确 skipped 不瞎写）。
 
 ## 🎛 Claude Code `/model` 菜单
 
