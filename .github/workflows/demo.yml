@@ -71,7 +71,7 @@ jobs:
           version: v0.12.1 # 钉版本防 GIF 编码漂移；升级需本地对比后同步改动
 
       - name: 产物有 diff 才 commit 回 main
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: 'docs(demo): CI 自动重录 demo.gif [skip ci]'
           file_pattern: assets/demo.gif
