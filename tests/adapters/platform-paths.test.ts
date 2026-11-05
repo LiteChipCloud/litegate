@@ -92,6 +92,11 @@ describe("detect.ts TOOLS 与平台函数同步", () => {
     expect(detectOf("crush").configPath).toBe(crushPathFor(process.platform));
     // opencode detect 可能在 json/jsonc 间择一存在，但都落在 .config/opencode 下
     expect(detectOf("opencode").configPath).toContain(path.join(".config", "opencode"));
-    expect(detectOf("claude-desktop").configPath).toContain("Claude");
+    // claude-desktop 路径随平台：darwin 指向 Claude-3p 目录；linux 官方无版本 → 未知（""）；
+    // win32 有官方数据目录证据（%APPDATA%\Claude）
+    const cdPath = detectOf("claude-desktop").configPath;
+    if (process.platform === "darwin") expect(cdPath).toContain("Claude-3p");
+    else if (process.platform === "win32") expect(cdPath).toContain("Claude");
+    else expect(cdPath).toBe("");
   });
 });

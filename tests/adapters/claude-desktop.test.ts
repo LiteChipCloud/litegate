@@ -21,6 +21,14 @@ import { makeOptions, readJSON } from "../helpers/fixtures.js";
 import { tmpHome } from "../helpers/tmp-home.js";
 
 const appSupport = () => path.join(tmpHome(), "Library", "Application Support");
+
+/**
+ * claude-desktop 的写入语义是 macOS 专属（configLibrary 推理 profile 是 macOS 3p
+ * 部署特性；win32/linux 适配器明确 skipped——见 platform-paths.test.ts 的平台表）。
+ * 因此写入/verify 用例仅在 darwin 执行；非 darwin 平台由底部的语义锁用例覆盖。
+ */
+const itMac = process.platform === "darwin" ? it : it.skip;
+const itNotMac = process.platform === "darwin" ? it.skip : it;
 const profileOf = (dirName: string) => {
   const meta = readJSON(path.join(appSupport(), dirName, "configLibrary", "_meta.json"));
   return path.join(appSupport(), dirName, "configLibrary", `${meta.appliedId}.json`);
@@ -34,7 +42,7 @@ beforeEach(() => {
 });
 
 describe("claude-desktop configure（全新安装）", () => {
-  it("创建 Claude-3p/configLibrary + _meta.json + gateway profile，权限 600", () => {
+  itMac("创建 Claude-3p/configLibrary + _meta.json + gateway profile，权限 600", () => {
     const res = claudeDesktopAdapter.configure(makeOptions());
 
     expect(res.ok).toBe(true);
@@ -59,7 +67,7 @@ describe("claude-desktop configure（已有安装）", () => {
     return lib;
   };
 
-  it("已有 appliedId → 更新现有 profile，不新建", () => {
+  itMac("已有 appliedId → 更新现有 profile，不新建", () => {
     seed("Claude-3p");
     const res = claudeDesktopAdapter.configure(makeOptions());
 
@@ -69,7 +77,7 @@ describe("claude-desktop configure（已有安装）", () => {
     expect(readJSON(path.join(lib, "existing-1.json")).inferenceGatewayApiKey).toBe("sk-lcc-test-key-000000000000");
   });
 
-  it("目录在但无 appliedId → 新建 profile 并写 _meta", () => {
+  itMac("目录在但无 appliedId → 新建 profile 并写 _meta", () => {
     seed("Claude-3p", false);
     const res = claudeDesktopAdapter.configure(makeOptions());
 
@@ -78,14 +86,14 @@ describe("claude-desktop configure（已有安装）", () => {
     expect(readJSON(profile).inferenceProvider).toBe("gateway");
   });
 
-  it("探测顺序：Claude-3p 优先于 Claude", () => {
+  itMac("探测顺序：Claude-3p 优先于 Claude", () => {
     seed("Claude");
     seed("Claude-3p");
     claudeDesktopAdapter.configure(makeOptions());
     expect(readJSON(profileOf("Claude-3p")).inferenceGatewayApiKey).toBe("sk-lcc-test-key-000000000000");
   });
 
-  it("profile 非法 JSON → 拒绝修改", () => {
+  itMac("profile 非法 JSON → 拒绝修改", () => {
     seed("Claude-3p");
     fs.writeFileSync(profileOf("Claude-3p"), "{broken");
     const res = claudeDesktopAdapter.configure(makeOptions());
@@ -93,7 +101,7 @@ describe("claude-desktop configure（已有安装）", () => {
     expect(res.error).toContain("不是合法 JSON");
   });
 
-  it("🔒 Claude 进程运行中 → skipped，不写任何文件", () => {
+  itMac("🔒 Claude 进程运行中 → skipped，不写任何文件", () => {
     seed("Claude-3p");
     vi.mocked(execSync).mockReturnValue(Buffer.from("12345\n"));
 
@@ -104,7 +112,7 @@ describe("claude-desktop configure（已有安装）", () => {
     expect(readJSON(profileOf("Claude-3p")).inferenceGatewayApiKey).toBe("sk-lcc-old"); // 原样
   });
 
-  it("已有 profile 写入前产生备份", () => {
+  itMac("已有 profile 写入前产生备份", () => {
     seed("Claude-3p");
     claudeDesktopAdapter.configure(makeOptions());
     expect(fs.readdirSync(path.join(appSupport(), "Claude-3p", "configLibrary")).some((f) => f.includes("bak-litegate"))).toBe(true);
@@ -112,17 +120,27 @@ describe("claude-desktop configure（已有安装）", () => {
 });
 
 describe("claude-desktop verify", () => {
-  it("写入后 verify 无错误", () => {
+  itMac("写入后 verify 无错误", () => {
     claudeDesktopAdapter.configure(makeOptions());
     expect(claudeDesktopAdapter.verify(makeOptions())).toEqual([]);
   });
 
-  it("非 sk-lcc key → 报告", () => {
+  itMac("非 sk-lcc key → 报告", () => {
     const lib = path.join(appSupport(), "Claude-3p", "configLibrary");
     fs.mkdirSync(lib, { recursive: true });
     fs.writeFileSync(path.join(lib, "_meta.json"), JSON.stringify({ appliedId: "p1", entries: [] }));
     fs.writeFileSync(path.join(lib, "p1.json"), JSON.stringify({ inferenceProvider: "gateway", inferenceGatewayBaseUrl: "https://www.litechipcloud.cn", inferenceGatewayApiKey: "sk-other" }));
     const errs = claudeDesktopAdapter.verify(makeOptions());
     expect(errs.some((e) => e.includes("sk-lcc"))).toBe(true);
+  });
+});
+
+describe("claude-desktop 非 darwin 语义锁", () => {
+  itNotMac("configure 返回 skipped 且 supported:true，不写任何文件", () => {
+    const res = claudeDesktopAdapter.configure(makeOptions());
+    expect(res.ok).toBe(false);
+    expect(res.supported).toBe(true);
+    expect(res.wrote).toBe(false);
+    expect(res.skipped).toBeTruthy();
   });
 });

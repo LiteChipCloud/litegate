@@ -12,14 +12,16 @@ import fs from "node:fs";
 import path from "node:path";
 import { crushAdapter } from "../../src/adapters/crush.js";
 import { opencodeAdapter } from "../../src/adapters/opencode.js";
-import { zedAdapter } from "../../src/adapters/zed.js";
+import { zedAdapter, configPathFor as zedConfigPathFor } from "../../src/adapters/zed.js";
 import { qwenCodeAdapter } from "../../src/adapters/qwen-code.js";
 import { makeOptions, readJSON, sampleChatModels } from "../helpers/fixtures.js";
 import { tmpHome } from "../helpers/tmp-home.js";
 
 const crushFile = () => path.join(tmpHome(), ".config", "crush", "crush.json");
 const opencodeFile = () => path.join(tmpHome(), ".config", "opencode", "opencode.json");
-const zedFile = () => path.join(tmpHome(), ".config", "zed", "settings.json");
+// zed 布局随平台分支（win32 = AppData/Roaming/Zed）：造文件必须走适配器同一函数
+// （configPathFor 内部用被 mock 的 homedir()=tmpHome，返回值即本测试沙箱内绝对路径）
+const zedFile = () => zedConfigPathFor(process.platform);
 const qwenFile = () => path.join(tmpHome(), ".qwen", "settings.json");
 
 beforeEach(() => {

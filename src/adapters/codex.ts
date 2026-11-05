@@ -37,10 +37,13 @@ export const codexAdapter: ToolAdapter = {
     text = text.replace(new RegExp(`${MARK_BEGIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?${MARK_END.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\n?`, "g"), "");
     const defaultModel = o.defaultModelKey;
     const catalogPath = writeCodexCatalog(o.chatModels, homedir(), o.dryRun);
+    // TOML basic string 里 \  是转义前导符：Windows 路径（C:\Users\...）必须翻倍，
+    // 否则 \U / \A 触发「Invalid character in unicode sequence」——真 Windows 必炸
+    const catalogPathTOML = catalogPath.replace(/\\/g, "\\\\");
     const block = `${MARK_BEGIN}
 model_provider = "litegate"
 model = "${defaultModel}"
-model_catalog_json = "${catalogPath}"
+model_catalog_json = "${catalogPathTOML}"
 
 [model_providers.litegate]
 name = "LiteGate"
